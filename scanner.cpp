@@ -14,12 +14,29 @@ bool is_white_space(char c) {
 Token* Scanner::nextToken() {
     Token* token;
     while (current < input.length() && is_white_space(input[current])) current++;
-    // Fin de la cadena, se cambio el END por nullptr porque C no tiene ese tipo de dato
+    // Fin de la cadena, se cambió el END por nullptr porque C no tiene ese tipo de dato
     if (current >= input.length()) return nullptr; 
     
     char c = input[current];
     first = current;
+
+    //Esto ignora las liberias que se incluyan en el archivo de entrada como #include<stdio.h>
+    if (c == '#') {
+    while (current < input.length() && input[current] != '\n') {
+        current++;
+    }
+    return nextToken(); 
+    }
     
+    // Esto ignora comentarios de línea que comienzan con //
+    if (c == '/' && current + 1 < input.length() && input[current + 1] == '/') {
+        current += 2; // Avanzar dos caracteres para omitir //
+        while (current < input.length() && input[current] != '\n') {
+            current++;
+        }
+        return nextToken(); 
+    }
+
     if (isdigit(c)) {
         current++;
         while (current < input.length() && isdigit(input[current]))
@@ -41,9 +58,22 @@ Token* Scanner::nextToken() {
         else if (word == "float") token = new Token(Token::FLOAT, word, 0, word.length());
         else if (word == "double") token = new Token(Token::DOUBLE, word, 0, word.length());
         else if (word == "char") token = new Token(Token::CHAR, word, 0, word.length());
+        else if (word == "return") token = new Token(Token::RETURN, word, 0, word.length());
         else if (word == "void") token = new Token(Token::VOID, word, 0, word.length());
         else token = new Token(Token::ID, word, 0, word.length());
     }
+    else if (c == '"') {  // Maneja cadenas de texto de tipo printf("%d")
+        current++;
+        while (current < input.length() && input[current] != '"')
+            current++;
+        if (current < input.length()) { 
+            current++; // Para incluir la comilla de cierre
+            token = new Token(Token::STRING, input, first + 1, current - first - 2); // -2 para excluir las comillas
+        } else {
+            token = new Token(Token::ERR, c); // Error si no se encuentra el cierre
+        }
+    }
+
     else if (strchr("+-*/()=;,<>!{}!", c)) {
         switch(c) {
             case '+': token = new Token(Token::PLUS, c); break;
@@ -123,6 +153,6 @@ void test_scanner(Scanner* scanner) {
         }
         delete current;
     }
-    // Mensaje de finalización de entrada, se cambio el END por nullptr porque C no tiene ese tipo de dato
+    // Mensaje de finalización de entrada, se cambió el END por nullptr porque C no tiene ese tipo de dato
     cout << "Fin de la entrada" << endl;  
 }

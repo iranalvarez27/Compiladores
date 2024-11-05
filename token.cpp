@@ -17,6 +17,7 @@ std::ostream& operator << ( std::ostream& outs, const Token & tok )
         case Token::ID: outs << "TOKEN(ID)"; break;
         case Token::NUM: outs << "TOKEN(NUM)"; break;
         case Token::ASSIGN: outs << "TOKEN(ASSIGN)"; break;
+        case Token::RETURN: outs << "TOKEN(RETURN)"; break;
         
         case Token::LT: outs << "TOKEN(LT)"; break;
         case Token::LE: outs << "TOKEN(LE)"; break;
@@ -51,6 +52,7 @@ std::ostream& operator << ( std::ostream& outs, const Token & tok )
 
         case Token::SEMICOLON: outs << "TOKEN(SEMICOLON)"; break;
         case Token::COMMA: outs << "TOKEN(COMMA)"; break;
+        case Token::COMILLA: outs << "TOKEN(COMILLA)"; break;
         default: outs << "TOKEN(UNKNOWN)"; break;
     }
     return outs;

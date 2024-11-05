@@ -6,13 +6,13 @@
 class Token {
 public:
     enum Type {
-        ID, NUM, ASSIGN, 
+        ID, NUM, ASSIGN, COMILLA,
         LT, LE,EQ, GE, GT, NE,
         INT, LONG, FLOAT, DOUBLE, CHAR, VOID, STRING,
         IF, ELSE, FOR, WHILE, PRINTF,
         PLUS, MINUS, MUL, DIV, ERR, 
         PD, PI, LLI, LLD,
-        SEMICOLON, COMMA
+        SEMICOLON, COMMA, RETURN
     };
     Type type;
     std::string text;
