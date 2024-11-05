@@ -39,7 +39,7 @@ AssignStmt::~AssignStmt() {
 }
 
 
-IfStmt::IfStmt(Exp* c, StmList* t, StmList* e):cond(c),then(t),els(e) {}
+IfStmt::IfStmt(CExp* c, StmList* t, StmList* e):cond(c),then(t),els(e) {}
 IfStmt::~IfStmt() {
     delete cond;
     delete then;
@@ -47,7 +47,7 @@ IfStmt::~IfStmt() {
 }
 
 
-ForStmt::ForStmt(Stmt* i, Exp* c, Stmt* u, StmList* b):init(i),cond(c),update(u),body(b) {}
+ForStmt::ForStmt(Stmt* i, CExp* c, Stmt* u, StmList* b):init(i),cond(c),update(u),body(b) {}
 ForStmt::~ForStmt() {
     delete init;
     delete cond;
