@@ -53,11 +53,11 @@ Token* Scanner::nextToken() {
         else if (word == "if") token = new Token(Token::IF, word, 0, word.length());
         else if (word == "else") token = new Token(Token::ELSE, word, 0, word.length());
         else if (word == "for") token = new Token(Token::FOR, word, 0, word.length());
-        else if (word == "int") token = new Token(Token::INT, word, 0, word.length());
-        else if (word == "long") token = new Token(Token::LONG, word, 0, word.length());
-        else if (word == "float") token = new Token(Token::FLOAT, word, 0, word.length());
-        else if (word == "double") token = new Token(Token::DOUBLE, word, 0, word.length());
-        else if (word == "char") token = new Token(Token::CHAR, word, 0, word.length());
+        else if (word == "int"|word == "d") token = new Token(Token::INT, word, 0, word.length());
+        else if (word == "long" |word == "ld") token = new Token(Token::LONG, word, 0, word.length());
+        else if (word == "float" | word == "f") token = new Token(Token::FLOAT, word, 0, word.length());
+        else if (word == "double" | word == "f") token = new Token(Token::DOUBLE, word, 0, word.length());
+        else if (word == "char" | word =="c") token = new Token(Token::CHAR, word, 0, word.length());
         else if (word == "return") token = new Token(Token::RETURN, word, 0, word.length());
         else if (word == "void") token = new Token(Token::VOID, word, 0, word.length());
         else token = new Token(Token::ID, word, 0, word.length());
@@ -74,7 +74,7 @@ Token* Scanner::nextToken() {
         }
     }
 
-    else if (strchr("+-*/()=;,<>!{}!", c)) {
+    else if (strchr("+-*/()=;,<>!{}!%", c)) {
         switch(c) {
             case '+': token = new Token(Token::PLUS, c); break;
             case '-': token = new Token(Token::MINUS, c); break;
@@ -85,6 +85,7 @@ Token* Scanner::nextToken() {
             case ')': token = new Token(Token::PD, c); break;
             case '{': token = new Token(Token::LLI, c); break;
             case '}': token = new Token(Token::LLD, c); break;
+            case '%': token = new Token(Token::PTJ, c); break;
             case '=':
                 if (current + 1 < input.length() && input[current + 1] == '=') {
                     token = new Token(Token::EQ, "==", 0, 2);

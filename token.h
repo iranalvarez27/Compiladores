@@ -12,7 +12,7 @@ public:
         IF, ELSE, FOR, WHILE, PRINTF,
         PLUS, MINUS, MUL, DIV, ERR, 
         PD, PI, LLI, LLD,
-        SEMICOLON, COMMA, RETURN
+        SEMICOLON, COMMA, RETURN, END, PTJ
     };
     Type type;
     std::string text;

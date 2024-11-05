@@ -38,6 +38,7 @@ std::ostream& operator << ( std::ostream& outs, const Token & tok )
         case Token::ELSE: outs << "TOKEN(ELSE)"; break;
         case Token::FOR: outs << "TOKEN(FOR)"; break;
         case Token::PRINTF: outs << "TOKEN(PRINTF)"; break;
+        case Token::PTJ: outs << " TOKEN(PTJ)"; break;
 
         case Token::PLUS: outs << "TOKEN(PLUS)"; break;
         case Token::MINUS: outs << "TOKEN(MINUS)"; break;
@@ -53,6 +54,7 @@ std::ostream& operator << ( std::ostream& outs, const Token & tok )
         case Token::SEMICOLON: outs << "TOKEN(SEMICOLON)"; break;
         case Token::COMMA: outs << "TOKEN(COMMA)"; break;
         case Token::COMILLA: outs << "TOKEN(COMILLA)"; break;
+        case Token::END: outs << "TOKEN(END)"; break;
         default: outs << "TOKEN(UNKNOWN)"; break;
     }
     return outs;
