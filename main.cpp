@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include "scanner.h"
+#include "parser.h"
 
 using namespace std;
 
@@ -19,7 +20,15 @@ int main() {
 
     test_scanner(scanner);
 
+    Parser* parser = new Parser(scanner);
+    if(parser->parse()) {
+        cout << "Análisis sintáctico exitoso" << endl;
+    } else {
+        cout << "Error en el análisis sintáctico" << endl;
+    }
+
     delete scanner;
+    delete parser;
 
     return 0;
 }
