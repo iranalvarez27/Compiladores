@@ -1,164 +1,202 @@
 #ifndef EXP_H
 #define EXP_H
 
+#include <iostream>
+#include <vector>
 #include <string>
-#include <unordered_map>
-#include <list>
 
-enum BinaryOp { PLUS_OP, MINUS_OP, MUL_OP, DIV_OP};
-enum CompOp { LT_OP, LE_OP, EQ_OP, GE_OP, GT_OP, NE_OP};
-enum Type { INT_T, LONG_T, FLOAT_T, DOUBLE_T, CHAR_T, VOID_T, STRING_T};
+using namespace std;
 
-class Program{
-    public:
-        std::list<StmList*> slist;
-        Program();
-        void add(StmList* s);
-        ~Program();
-
-};
-//StmtList      ::= Stmt (';' Stmt)*
-class StmList{
-    public:
-        std::list<Stmt*> slist;
-        StmList(){}
-        StmList(Stmt* s){
-            add(s);
-        };
-        void add(Stmt* s){
-            slist.push_back(s);
-        };
-        ~StmList(){
-            for(Stmt* stmt : slist){
-                delete stmt;
-            }
-        };
-};
-
-//Stmt::= VarDecl|AssignStmt|IfStmt|ForStmt|FuncCall|FuncDecl|PrintStmt
-class Stmt{
-    public:
-        virtual ~Stmt() = 0;
-};
-
-//VarDecl       ::= Type id
-class VarDecl : public Stmt{
-    public:
-        Type type;
-        std::string id;
-        VarDecl(Type t, std::string i);
-        ~VarDecl();
-};
-
-class AssignStmt : public Stmt{
-    public:
-        std::string id;
-        Exp* rhs;
-        AssignStmt(std::string id, Exp* e);
-        ~AssignStmt();
-};
-
-class IfStmt : public Stmt{
-    public:
-        CExp* cond;
-        StmList* then;
-        StmList* els;
-        IfStmt(CExp* c, StmList* t, StmList* e);
-        ~IfStmt();
-};
-
-class ForStmt : public Stmt{
-    public:
-        Stmt* init;
-        CExp* cond;
-        Stmt* update;
-        StmList* body;
-        ForStmt(Stmt* i, CExp* c, Stmt* u, StmList* b);
-        ~ForStmt();
-};
-
-class FuncCall : public Stmt{
-    public:
-        std::string id;
-        std::list<Exp*> args;
-        FuncCall(std::string i);
-        void add(Exp* e);
-        ~FuncCall();
-};
-
-class FuncDecl : public Stmt{
-    public:
-        Type type;
-        std::string id;
-        std::list<VarDecl*> params;
-        StmList* body;
-        FuncDecl(Type t, std::string i);
-        void add(VarDecl* v);
-        ~FuncDecl();
-};
-
-class PrintStmt : public Stmt{
-    public:
-        Exp* e;
-        PrintStmt(Exp* e);
-        ~PrintStmt();
-};
-
-//CExp          ::= AExp ( '<' | '<=' | '==' | '>=' | '>' | '!=' ) AExp
-class CExp{
-    public:
-        Exp* left;
-        Exp* right;
-        CompOp op;
-        CExp(Exp* l, Exp* r, CompOp o);
-        ~CExp();
-};
-
-//AExp          ::= Term (('+' | '-') Term)*
-class AExp : public Exp{
-    public:
-        std::list<Exp*> terms;
-        std::list<BinaryOp> ops;
-        AExp(Exp* t);
-        void add(Exp* t, BinaryOp o);
-        ~AExp();
-};
-
-//Term          ::= Factor (('*' | '/') Factor)*
-class Term : public Exp{
-    public:
-        std::list<Exp*> factors;
-        std::list<BinaryOp> ops;
-        Term(Exp* f);
-        void add(Exp* f, BinaryOp o);
-        ~Term();
-};
-
-//Factor        ::= '(' AExp ')' | num | id 
-class Factor : public Exp{
-    public:
-        Exp* e;
-        Factor(Exp* e);
-        Factor(const string& s);
-        ~Factor();
-};
-
-class FormatString{
-    public:
-        std::string format;
-        std::list<Exp*> args;
-        FormatString();
-        FormatString(int type);
-        void add(Exp* e);
-        ~FormatString();
-};
-
-class Exp {
+// Clase base para Expresiones
+class Expr {
 public:
-    virtual ~Exp() = 0;
-    static char binopToChar(BinaryOp op);
+    virtual ~Expr() = default;
+    virtual void print() const = 0; // Para depuración
 };
 
+// Clase base para Sentencias
+class Stmt {
+public:
+    virtual ~Stmt() = default;
+    virtual void print() const = 0;
+};
 
+// ----------------------------- AST para Expresiones -----------------------------
+
+class AExp : public Expr {
+public:
+    virtual ~AExp() = default;
+};
+
+class Term : public AExp {
+public:
+    virtual ~Term() = default;
+};
+
+class Factor : public Term {
+public:
+    string value;
+    
+    Factor(const string& val) : value(val) {}
+
+    void print() const override {
+        cout << "Factor: " << value << endl;
+    }
+};
+
+class BinOp : public AExp {
+public:
+    AExp* left;
+    string op;
+    AExp* right;
+
+    BinOp(AExp* l, const string& operation, AExp* r) : left(l), op(operation), right(r) {}
+
+    void print() const override {
+        cout << "BinOp: " << op << endl;
+        left->print();
+        right->print();
+    }
+};
+
+// ----------------------------- AST para Sentencias -----------------------------
+
+class VarDecl : public Stmt {
+public:
+    string type;
+    string id;
+
+    VarDecl(const string& t, const string& id) : type(t), id(id) {}
+
+    void print() const override {
+        cout << "VarDecl: " << type << " " << id << endl;
+    }
+};
+
+class Assignment : public Stmt {
+public:
+    string id;
+    AExp* expr;
+
+    Assignment(const string& id, AExp* e) : id(id), expr(e) {}
+
+    void print() const override {
+        cout << "Assignment: " << id << " = ";
+        expr->print();
+    }
+};
+
+class IfStmt : public Stmt {
+public:
+    Expr* condition;
+    vector<Stmt*> thenStmtList;
+    vector<Stmt*> elseStmtList;
+
+    IfStmt(Expr* cond) : condition(cond) {}
+
+    void addThenStmt(Stmt* stmt) {
+        thenStmtList.push_back(stmt);
+    }
+
+    void addElseStmt(Stmt* stmt) {
+        elseStmtList.push_back(stmt);
+    }
+
+    void print() const override {
+        cout << "IfStmt: " << endl;
+        cout << "Condition: ";
+        condition->print();
+        cout << "Then block:" << endl;
+        for (const auto& stmt : thenStmtList) stmt->print();
+        if (!elseStmtList.empty()) {
+            cout << "Else block:" << endl;
+            for (const auto& stmt : elseStmtList) stmt->print();
+        }
+    }
+};
+
+class ForStmt : public Stmt {
+public:
+    VarDecl* varDecl;
+    Expr* condition;
+    Assignment* assignment;
+    vector<Stmt*> stmtList;
+
+    ForStmt(VarDecl* v, Expr* c, Assignment* a) : varDecl(v), condition(c), assignment(a) {}
+
+    void addStmt(Stmt* stmt) {
+        stmtList.push_back(stmt);
+    }
+
+    void print() const override {
+        cout << "ForStmt: " << endl;
+        varDecl->print();
+        cout << "Condition: ";
+        condition->print();
+        cout << "Assignment: ";
+        assignment->print();
+        cout << "Body:" << endl;
+        for (const auto& stmt : stmtList) stmt->print();
+    }
+};
+
+class FuncCall : public Stmt {
+public:
+    string id;
+    vector<AExp*> args;
+
+    FuncCall(const string& id) : id(id) {}
+
+    void addArg(AExp* arg) {
+        args.push_back(arg);
+    }
+
+    void print() const override {
+        cout << "FuncCall: " << id << "(";
+        for (size_t i = 0; i < args.size(); ++i) {
+            args[i]->print();
+            if (i < args.size() - 1) cout << ", ";
+        }
+        cout << ")" << endl;
+    }
+};
+
+class Print : public Stmt {
+public:
+    string format;
+    vector<AExp*> args;
+
+    Print(const string& format) : format(format) {}
+
+    void addArg(AExp* arg) {
+        args.push_back(arg);
+    }
+
+    void print() const override {
+        cout << "Print: " << format << " ";
+        for (size_t i = 0; i < args.size(); ++i) {
+            args[i]->print();
+            if (i < args.size() - 1) cout << ", ";
+        }
+        cout << endl;
+    }
+};
+
+// ----------------------------- AST para el Programa -----------------------------
+
+class Program {
+public:
+    vector<Stmt*> stmtList;
+
+    void addStmt(Stmt* stmt) {
+        stmtList.push_back(stmt);
+    }
+
+    void print() const {
+        for (const auto& stmt : stmtList) {
+            stmt->print();
+        }
+    }
+};
 
 #endif // EXP_H
