@@ -1,43 +1,39 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#include <iostream>
-#include <string>
 #include "scanner.h"
-#include "token.h"
+#include "exp.h"
 
 class Parser {
 private:
-    Scanner* scanner;  
-    Token* current;     
-    Token* previous;    
-
-    bool match(Token::Type ttype);    
-    bool check(Token::Type ttype);    
-    bool advance();                   
-    bool isAtEnd();                
-
-    void parseProgram();
-    void parseStmtList();
-    void parseStmt();
-    void parseVarDecl();
-    void parseAssignment();
-    void parseIfStmt();
-    void parseForStmt();
-    void parseFuncCall();
-    void parseFuncDecl();
-    void parsePrint();
-
-    void parseType();
-    void parseCExp();
-    void parseAExp();
-    void parseTerm();
-    void parseFactor();
-
+    Scanner* scanner;
+    Token *current, *previous;
+    bool match(Token::Type ttype);
+    bool check(Token::Type ttype);
+    bool advance();
+    bool isAtEnd();
+    Program* parseProgram();
+    StmList* parseStmtList();
+    Stmt* parseStatement(); 
+    VarDecl* parseVarDecl();
+    AssignStmt* parseAssignStmt();
+    IfStmt* parseIfStmt();
+    ForStmt* parseForStmt();
+    FuncCall* parseFuncCall();
+    FuncDecl* parseFuncDecl();
+    PrintStmt* parsePrintStmt();
+    FormatString* parseFormatString();
+    Exp* parseExpression();
+    Term* parseTerm();
+    Factor* parseFactor();
+    CExp* parseCExp();
+    AExp* parseAExp();
+    Type parseType();
 public:
     Parser(Scanner* scanner);
-
-    void parse();
+    Program* parse(){
+        return parseProgram();
+    }
 };
 
 #endif // PARSER_H

@@ -2,12 +2,19 @@
 
 int main(){
     int x;
-    x = 1;
-    
-    for (int i = 0; i < 10; i++){//declara o como variable local
-        x = x + i;
-    }
-    printf("%d\n", x);
+    int y;
+    long z;
 
+    x = 1;
+    y = 10;
+    z = 1000000;
+    x = 20;
+    
+
+    printf("%d\n", x);
+    printf("%d\n", y);
+    printf("%ld\n", z);
+    
     return 0;
 }
+

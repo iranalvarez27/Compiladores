@@ -2,8 +2,8 @@
 #include <fstream>
 #include <string>
 #include "scanner.h"
-#include "parser.h" 
-#include "exp.h"
+#include "parser.h"
+
 
 using namespace std;
 
@@ -19,13 +19,18 @@ int main() {
     inputFile.close(); 
 
     Scanner* scanner = new Scanner(inputContent.c_str());
-
     test_scanner(scanner);
 
     Parser* parser = new Parser(scanner);
+    if(parser->parse()) {
+        cout << "Análisis sintáctico exitoso" << endl;
+    } else {
+        cout << "Error en el análisis sintáctico" << endl;
+    }
 
-    delete parser;
+
     delete scanner;
+    delete parser;
 
     return 0;
 }
