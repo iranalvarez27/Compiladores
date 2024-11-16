@@ -78,12 +78,41 @@ StmList* Parser::parseStmtList() {
 //Stmt::= VarDecl|AssignStmt|IfStmt|ForStmt|FuncCall|FuncDecl|PrintStmt
 Stmt* Parser::parseStatement() {
     Stmt* s = NULL;
-    Exp* e;
-    
-    if (current == NULL) {
-        cout << "Error: Token actual es NULL" << endl;
+
+    // Dependiendo del token actual, se llama a la función de parsing correspondiente
+    if (check(Token::INT) || check(Token::LONG) || check(Token::FLOAT) || 
+        check(Token::DOUBLE) || check(Token::CHAR) || check(Token::STRING) || check(Token::VOID)) {
+        s = parseVarDecl();
+    } else if (check(Token::ID)) {
+        // Identificador puede ser una asignación o una llamada a función
+        Token* lookahead = current;  // Guardamos el estado actual para restaurarlo si es necesario
+        advance();
+        if (check(Token::ASSIGN)) {
+            previous = lookahead;  // Restauramos el token de ID
+            current = lookahead;
+            s = parseAssignStmt();
+        } else if (check(Token::PI)) {
+            previous = lookahead;  // Restauramos el token de ID
+            current = lookahead;
+            s = parseFuncCall();
+        } else {
+            cout << "Error: token inesperado después del identificador en declaración." << endl;
+            exit(1);
+        }
+    } else if (check(Token::IF)) {
+        s = parseIfStmt();
+    } else if (check(Token::FOR)) {
+        s = parseForStmt();
+    } else if (check(Token::PRINTF)) {
+        s = parsePrintStmt();
+    } else if (check(Token::INT) || check(Token::LONG) || check(Token::FLOAT) || 
+               check(Token::DOUBLE) || check(Token::CHAR) || check(Token::STRING) || check(Token::VOID)) {
+        s = parseFuncDecl();
+    } else {
+        cout << "Error: declaración desconocida." << endl;
         exit(1);
     }
+
     return s;
 }
 

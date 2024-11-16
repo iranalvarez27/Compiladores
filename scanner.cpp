@@ -53,11 +53,11 @@ Token* Scanner::nextToken() {
         else if (word == "if") token = new Token(Token::IF, word, 0, word.length());
         else if (word == "else") token = new Token(Token::ELSE, word, 0, word.length());
         else if (word == "for") token = new Token(Token::FOR, word, 0, word.length());
-        else if (word == "int"|word == "d") token = new Token(Token::INT, word, 0, word.length());
-        else if (word == "long" |word == "ld") token = new Token(Token::LONG, word, 0, word.length());
-        else if (word == "float" | word == "f") token = new Token(Token::FLOAT, word, 0, word.length());
-        else if (word == "double" | word == "f") token = new Token(Token::DOUBLE, word, 0, word.length());
-        else if (word == "char" | word =="c") token = new Token(Token::CHAR, word, 0, word.length());
+        else if (word == "int") token = new Token(Token::INT, word, 0, word.length());
+        else if (word == "long") token = new Token(Token::LONG, word, 0, word.length());
+        else if (word == "float" ) token = new Token(Token::FLOAT, word, 0, word.length());
+        else if (word == "double") token = new Token(Token::DOUBLE, word, 0, word.length());
+        else if (word == "char" ) token = new Token(Token::CHAR, word, 0, word.length());
         else if (word == "return") token = new Token(Token::RETURN, word, 0, word.length());
         else if (word == "void") token = new Token(Token::VOID, word, 0, word.length());
         else token = new Token(Token::ID, word, 0, word.length());
