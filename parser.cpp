@@ -79,20 +79,18 @@ StmList* Parser::parseStmtList() {
 Stmt* Parser::parseStatement() {
     Stmt* s = NULL;
 
-    // Dependiendo del token actual, se llama a la función de parsing correspondiente
     if (check(Token::INT) || check(Token::LONG) || check(Token::FLOAT) || 
         check(Token::DOUBLE) || check(Token::CHAR) || check(Token::STRING) || check(Token::VOID)) {
         s = parseVarDecl();
     } else if (check(Token::ID)) {
-        // Identificador puede ser una asignación o una llamada a función
-        Token* lookahead = current;  // Guardamos el estado actual para restaurarlo si es necesario
+        Token* lookahead = current;  
         advance();
         if (check(Token::ASSIGN)) {
-            previous = lookahead;  // Restauramos el token de ID
+            previous = lookahead; 
             current = lookahead;
             s = parseAssignStmt();
         } else if (check(Token::PI)) {
-            previous = lookahead;  // Restauramos el token de ID
+            previous = lookahead; 
             current = lookahead;
             s = parseFuncCall();
         } else {
@@ -276,8 +274,7 @@ FuncDecl* Parser::parseFuncDecl(){
     return f;
 }
 
-//Print         ::= 'printf' '(' FormatString ',' AExp ')'
-
+//Print ::= 'printf' '(' FormatString ',' AExp ')'
 PrintStmt* Parser::parsePrintStmt(){
     if (!match(Token::PRINTF)) {
         cout << "Error: se esperaba un 'printf'." << endl;
@@ -287,7 +284,11 @@ PrintStmt* Parser::parsePrintStmt(){
         cout << "Error: se esperaba un '(' después del 'printf'." << endl;
         exit(1);
     }
-    FormatString* f = parseFormatString();
+    if(!match(Token::STRING)){
+        cout << "Error: se esperaba una cadena de formato después del 'printf'." << endl;
+        exit(1);
+    }
+    
     if (!match(Token::COMMA)) {
         cout << "Error: se esperaba una ',' después de la cadena de formato." << endl;
         exit(1);
@@ -297,7 +298,7 @@ PrintStmt* Parser::parsePrintStmt(){
         cout << "Error: se esperaba un ')' después de la expresión." << endl;
         exit(1);
     }
-    return new PrintStmt(e);
+    return new PrintStmt(previous->text);
 }
 
 Type Parser::parseType(){
@@ -372,24 +373,23 @@ Factor* Parser::parseFactor(){
 
 //FormatString  ::= " (%d | %ld | %f | %c | %s )"
 
-FormatString* Parser::parseFormatString(){
-    if (!match(Token::COMILLA)) {
-        cout << "Error: se esperaba una comilla después de 'printf'." << endl;
-        exit(1);
-    }
-    if (!match(Token::COMILLA)) {
-        cout << "Error: se esperaba una comilla después de la primera comilla." << endl;
-        exit(1);
-    }
-    if (match(Token::PTJ)) {
-        return new FormatString();
-    }
-    if (match(Token::INT)) return new FormatString(INT_T);
-    if (match(Token::LONG)) return new FormatString(LONG_T);
-    if (match(Token::FLOAT)) return new FormatString(FLOAT_T);
-    if (match(Token::CHAR)) return new FormatString(CHAR_T);
-    if (match(Token::STRING)) return new FormatString(STRING_T);
-    cout << "Error: se esperaba un tipo de dato." << endl;
-    exit(1);
-}
-
+// FormatString* Parser::parseFormatString(){
+//     if (!match(Token::COMILLA)) {
+//         cout << "Error: se esperaba una comilla después de 'printf'." << endl;
+//         exit(1);
+//     }
+//     if (!match(Token::COMILLA)) {
+//         cout << "Error: se esperaba una comilla después de la primera comilla." << endl;
+//         exit(1);
+//     }
+//     if (match(Token::PTJ)) {
+//         return new FormatString();
+//     }
+//     if (match(Token::INT)) return new FormatString(INT_T);
+//     if (match(Token::LONG)) return new FormatString(LONG_T);
+//     if (match(Token::FLOAT)) return new FormatString(FLOAT_T);
+//     if (match(Token::CHAR)) return new FormatString(CHAR_T);
+//     if (match(Token::STRING)) return new FormatString(STRING_T);
+//     cout << "Error: se esperaba un tipo de dato." << endl;
+//     exit(1);
+// }

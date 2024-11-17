@@ -82,16 +82,16 @@ class Factor : public Exp {
         ~Factor();
 };
 
-// FormatString para la impresión
-class FormatString {
-    public:
-        std::string format;
-        std::list<Exp*> args;
-        FormatString();
-        FormatString(int type);
-        void add(Exp* e);
-        ~FormatString();
-};
+// // FormatString para la impresión
+// class FormatString {
+//     public:
+//         std::string format;
+//         std::list<Exp*> args;
+//         FormatString();
+//         FormatString(int type);
+//         void add(Exp* e);
+//         ~FormatString();
+// };
 
 // AssignStmt ::= id '=' Exp
 class AssignStmt : public Stmt {
@@ -113,6 +113,7 @@ class IfStmt : public Stmt {
 };
 
 // ForStmt ::= 'for' '(' Stmt CExp Stmt ')' StmList
+//ForStmt       ::= 'for' '(' VarDecl ';' CExp ';' Assignment ')' '{' StmtList '}'
 class ForStmt : public Stmt {
     public:
         Stmt* init;
@@ -145,11 +146,14 @@ class FuncDecl : public Stmt {
         ~FuncDecl();
 };
 
-// PrintStmt ::= 'print' '(' Exp ')'
+// Print ::= 'printf' '(' STRING (',' AExp)* ')'
 class PrintStmt : public Stmt {
     public:
-        Exp* e;
-        PrintStmt(Exp* e);
+        std::string format;
+        std::list<Exp*> e;
+
+        PrintStmt(std::string fmt);
+        void add(Exp* e);
         ~PrintStmt();
 };
 

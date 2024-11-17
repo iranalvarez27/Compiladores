@@ -93,9 +93,11 @@ void FuncDecl::add(VarDecl* v) {
 }
 
 // Implementación de PrintStmt
-PrintStmt::PrintStmt(Exp* e) : e(e) {}
+PrintStmt::PrintStmt(std::string fmt): format(fmt) {}
 PrintStmt::~PrintStmt() {
-    delete e;
+    for (Exp* e : e) {
+        delete e;
+    }
 }
 
 // Implementación de CExp
@@ -138,16 +140,4 @@ Factor::Factor(Exp* e) : e(e) {}
 Factor::Factor(const std::string& s) : e(nullptr) {}  // Implementación para cadenas
 Factor::~Factor() {
     delete e;
-}
-
-// Implementación de FormatString
-FormatString::FormatString() {}
-FormatString::FormatString(int type) : format(std::to_string(type)) {}
-void FormatString::add(Exp* e) {
-    args.push_back(e);
-}
-FormatString::~FormatString() {
-    for (Exp* e : args) {
-        delete e;
-    }
 }
