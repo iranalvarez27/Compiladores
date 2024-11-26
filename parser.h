@@ -12,28 +12,35 @@ private:
     bool check(Token::Type ttype);
     bool advance();
     bool isAtEnd();
-    Program* parseProgram();
-    StmList* parseStmtList();
-    Stmt* parseStatement(); 
-    VarDecl* parseVarDecl();
-    AssignStmt* parseAssignStmt();
-    IfStmt* parseIfStmt();
-    ForStmt* parseForStmt();
-    FuncCall* parseFuncCall();
-    FuncDecl* parseFuncDecl();
-    PrintStmt* parsePrintStmt();
-    //FormatString* parseFormatString();
-    Exp* parseExpression();
-    Term* parseTerm();
-    Factor* parseFactor();
-    CExp* parseCExp();
-    AExp* parseAExp();
-    Type parseType();
+    // list<Stmt*> parseStatementList();
+    CExp* parseExp();
+    CExp* parseTerm();
+    CExp* parseFactor();
+
 public:
     Parser(Scanner* scanner);
-    Program* parse(){
-        return parseProgram();
-    }
+    Program* parseProgram();
+    FuncList* parseFuncList();
+    FuncDecl* parseFuncDecl();
+    VarDecList* parseVarDecList();
+    VarDec* parseVarDec();
+    ParamList* parseParamList();
+    Param* parseParam();
+    StatementList* parseStatementList();
+    Stmt* parseStatement();
+    Assignment* parseAssignment();
+    PrintStmt* parsePrintStmt();
+    ReturnStatement* parseReturnStmt();
+    IfStmt* parseIfStmt();
+    ForStmt* parseForStmt();
+    FuncCallExp* parseFuncCallExp();
+    FuncCallStmt* parseFuncCallStmt();
+    ArgList* parseArgList();
+    RelationalExp* parseRelationalExp();
+    StepCondition* parseStepCondition();
+    CExp* parseCExp();
+    
+    //Type* parseType();
 };
 
 #endif // PARSER_H

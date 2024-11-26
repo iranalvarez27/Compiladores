@@ -33,7 +33,7 @@ std::ostream& operator << ( std::ostream& outs, const Token & tok )
         case Token::CHAR: outs << "TOKEN(CHAR)"; break;
         case Token::VOID: outs << "TOKEN(VOID)"; break;
         case Token::STRING: outs << "TOKEN(STRING)"; break; //Para la gramática, printf acepta una cadena (string) como primer argumento. 
-
+        case Token::END: outs << "TOKEN(END)"; break;
         case Token::IF: outs << "TOKEN(IF)"; break;
         case Token::ELSE: outs << "TOKEN(ELSE)"; break;
         case Token::FOR: outs << "TOKEN(FOR)"; break;
@@ -50,11 +50,12 @@ std::ostream& operator << ( std::ostream& outs, const Token & tok )
         case Token::PI: outs << "TOKEN(PI)"; break;
         case Token::LLI: outs << "TOKEN(LLI)"; break;
         case Token::LLD: outs << "TOKEN(LLD)"; break;
+        case Token::PLUS_PLUS: outs <<"TOKEN(PLUS_PLUS)"; break;
+        case Token::MINUS_MINUS: outs <<"TOKEN(MINUS_MINUS)"; break;
 
         case Token::SEMICOLON: outs << "TOKEN(SEMICOLON)"; break;
         case Token::COMMA: outs << "TOKEN(COMMA)"; break;
         case Token::COMILLA: outs << "TOKEN(COMILLA)"; break;
-        case Token::END: outs << "TOKEN(END)"; break;
         default: outs << "TOKEN(UNKNOWN)"; break;
     }
     return outs;
@@ -62,4 +63,31 @@ std::ostream& operator << ( std::ostream& outs, const Token & tok )
 
 std::ostream& operator << ( std::ostream& outs, const Token* tok ) {
     return outs << *tok;
+}
+
+std::string Token::typeToString(Token::Type type) {
+    switch (type) {
+        case INT: return "INT";
+        case ID: return "ID";
+        case ASSIGN: return "ASSIGN";
+        case SEMICOLON: return "SEMICOLON";
+        case PLUS: return "PLUS";
+        case MINUS: return "MINUS";
+        case MUL: return "MUL";
+        case DIV: return "DIV";
+        case PI: return "PI";
+        case PD: return "PD";
+        case PRINTF: return "PRINTF";
+        case RETURN: return "RETURN";
+        case IF: return "IF";
+        case ELSE: return "ELSE";
+        case FOR: return "FOR";
+        case LLI: return "LLI";
+        case LLD: return "LLD";
+        case ERR: return "ERR";
+        case NUM: return "NUM";
+        case STRING: return "STRING";
+        case END: return "END";
+        default: return "ERR";
+    }
 }

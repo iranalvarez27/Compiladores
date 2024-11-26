@@ -19,6 +19,7 @@ bool Parser::check(Token::Type ttype) {
     return current->type == ttype;
 }
 
+
 bool Parser::advance() {
     if (!isAtEnd()) {
         Token* temp = current;
@@ -26,7 +27,6 @@ bool Parser::advance() {
         current = scanner->nextToken();
         previous = temp;
         if (check(Token::ERR)) {
-            cout << "Error de análisis, carácter no reconocido: " << current->text << endl;
             exit(1);
         }
         return true;
@@ -34,10 +34,527 @@ bool Parser::advance() {
     return false;
 }
 
+
 bool Parser::isAtEnd() {
     return (current->type == Token::END);
 }
 
+
+/*----------------------------------------------------------------------------------------------------------------------------------------*/
+
+
+//Factor ::= id | Num | '(' CExp ')'
+CExp* Parser::parseFactor() {
+    if (check(Token::ID)) {
+        advance();
+        if(match(Token::PLUS) || match(Token::MINUS)){
+            CExp* exp = parseCExp();
+            return exp;
+        }
+        else if(check(Token::PI)){
+            current = previous;
+            FuncCallExp* exp = parseFuncCallExp();
+            return exp;
+        } 
+        else if(check(Token::COMMA)){
+            current = previous;
+            ArgList* args = parseArgList();
+            
+        }
+        return new IdentifierExp(current->text);
+    } else if (match(Token::NUM)) {
+        return new NumberExp(stoi(previous->text));
+    } else if (check(Token::PI) || check(Token::PD) ) {
+        cout << "Factor es una expresión entre paréntesis: (" << endl;
+        CExp* exp = parseExp();
+        if (!match(Token::PD)) {
+            cout << "Error: Se esperaba un ')' en la línea " << previous->text << endl;
+            exit(1);
+        }
+        return exp;
+    }
+        else{
+        cout << "Error: Se esperaba un factor en la línea " << current->text << endl;
+        exit(1);
+    }
+    return nullptr;
+}
+
+// Parseando CExp ::= Exp [ RelOp Exp ] | id '+' id ';'
+
+CExp* Parser::parseCExp() {
+    CExp* left = parseExp();
+    if (check(Token::PLUS) || check(Token::MINUS)) {
+        Token* op = current;
+        advance();
+        CExp* right = parseExp();
+        return new BinaryExp(left, right, (op->type == Token::PLUS) ? BinaryOp::PLUS_OP : BinaryOp::MINUS_OP);
+    } else if (check(Token::ID)) {
+        string id = current->text;
+        advance();
+        if (match(Token::PLUS)) {
+            if (!match(Token::ID)) {
+                cout << "Error: Se esperaba un identificador en la línea " << current->text << endl;
+                exit(1);
+            }
+            string id2 = previous->text;
+            if (!match(Token::SEMICOLON)) {
+                cout << "Error: Se esperaba un ';' en la línea " << current->text << endl;
+                exit(1);
+            }
+            return new BinaryExp(new IdentifierExp(id), new IdentifierExp(id2), BinaryOp::PLUS_OP);
+        }
+    }
+    return nullptr;
+}
+
+
+// Parseando un término: Factor ::= id | Num | '(' CExp ')'
+
+CExp* Parser::parseTerm() {
+    CExp* left = parseFactor();
+    while (match(Token::MUL) || match(Token::DIV)) {
+        Token* op = previous;
+        CExp* right = parseFactor();
+        left = new BinaryExp(left, right, (op->type == Token::MUL) ? BinaryOp::MUL_OP : BinaryOp::DIV_OP);
+    }
+    return left;
+}
+
+// Parseando una expresión: Exp ::= Term (( '+' | '-' ) Term)*
+
+CExp* Parser::parseExp() {
+    CExp* left = parseTerm();
+    while (check(Token::PLUS) || check(Token::MINUS)) {
+        Token* op = previous;
+        CExp* right = parseTerm();
+        left = new BinaryExp(left, right, (op->type == Token::PLUS) ? BinaryOp::PLUS_OP : BinaryOp::MINUS_OP);
+    }
+    return left;
+}
+
+// Parseando CExp ::= Exp [ RelOp Exp ]
+RelationalExp* Parser::parseRelationalExp() {
+    CExp* left = parseExp();    
+    if (check(Token::LT) || check(Token::LE) || check(Token::EQ) || check(Token::GT) || check(Token::GE) || check(Token::NE)) {
+        Token* op = previous;
+        advance();
+        CExp* right = parseExp();
+        return new RelationalExp(left, right, (op->type == Token::LT) ? RelOp::LT_OP : (op->type == Token::LE) ? RelOp::LE_OP : (op->type == Token::EQ) ? RelOp::EQ_OP : (op->type == Token::GT) ? RelOp::GT_OP : (op->type == Token::GE) ? RelOp::GE_OP : RelOp::NE_OP);
+    }
+    return nullptr;
+}
+
+// Parseando una asignación: Assignment ::= id '=' CExp ';' Assignment ::= id '=' CExp ';' | id '+' id ';' | id '-' id ';'
+
+
+Assignment* Parser::parseAssignment() {
+    if (!match(Token::ID)) {
+        cout << "Error: Se esperaba un identificador en la línea " << previous->text << endl;
+        exit(1);
+    }
+    string id = previous->text;
+    if (!match(Token::ASSIGN)) {
+        cout << "Error: Se esperaba un '=' en la línea " << previous->text << endl;
+        exit(1);
+    }
+    CExp* rhs = parseExp();
+    if (!match(Token::SEMICOLON)) {
+        cout << "Error: Se esperaba un ';' en la línea " << previous->text << endl;
+        exit(1);
+    }
+    return new Assignment(id, rhs);
+}
+
+// Parseando una sentencia de impresión: PrintStmt ::= 'printf' '(' STRING ',' CExp ')' ';'
+
+PrintStmt* Parser::parsePrintStmt() {
+    if (!match(Token::PRINTF)) {
+        cout << "Error: Se esperaba un 'printf' en la línea " << previous->text << endl;
+        exit(1);
+    }
+    if(!match(Token::PI)){
+        cout << "Error: Se esperaba un '(' en la línea " << previous->text << endl;
+        exit(1);
+    }
+    if(!match(Token::STRING)){
+        cout << "Error: Se esperaba una cadena de texto en la línea " << previous->text << endl;
+        exit(1);
+    }
+
+    string format = previous->text;
+    if(!match(Token::COMMA)){
+        cout << "Error: Se esperaba una ',' en la línea " << previous->text << endl;
+        exit(1);
+    }
+    current = scanner->nextToken();
+    // cout << "Siguiente " << current->text << endl;
+    // CExp* exp = parseExp();
+    if(check(Token::ID))
+        if(match(Token::PI)){
+            current = previous;
+            FuncCallExp* exp = parseFuncCallExp();
+            if(!match(Token::PD)){
+                cout << "Error: Se esperaba un ')' en la línea " << previous->text << endl;
+                exit(1);
+            }
+            if(!match(Token::SEMICOLON)){
+                cout << "Error: Se esperaba un ';' en la línea " << previous->text << endl;
+                exit(1); 
+            }
+        else{
+            CExp* exp = parseExp();
+            if(!match(Token::PD)){
+                cout << "Error: Se esperaba un ')' en la línea " << previous->text << endl;
+                exit(1);
+            }
+            if(!match(Token::SEMICOLON)){
+                cout << "Error: Se esperaba un ';' en la línea " << previous->text << endl;
+                exit(1); 
+                }        
+            }
+        return new PrintStmt(format, exp);
+}
+return nullptr;
+}
+// Parseando una sentencia de retorno: ReturnStmt ::= 'return' CExp ';'
+ReturnStatement* Parser::parseReturnStmt() {
+    if (!check(Token::RETURN)) {
+        if(check(Token::LLD)){
+            //Terminar la ejecución
+            return nullptr;
+        }
+        cout << "Error: Se esperaba un 'return' en la línea " << previous->text << endl;
+        exit(1);
+    }
+    advance();
+    CExp* exp = parseExp();
+    if (!check(Token::SEMICOLON)) {
+        cout << "Error: Se esperaba un ';' en la línea " << previous->text << endl;
+        exit(1);
+    }
+    return new ReturnStatement(exp);
+}
+
+// Parseando una sentencia if-else: IfStmt ::= 'if' '(' CExp ')' '{' StmtList '}' [ 'else' '{' StmtList '}' ]
+
+IfStmt* Parser::parseIfStmt(){
+    //Reemplacar current por previous
+    if(!match(Token::IF)){
+        cout << "Error: Se esperaba un 'if' en la línea " << previous->text << endl;
+        exit(1);
+    }
+    if (!match(Token::PI)) {
+        cout << "Error: Se esperaba un '(' en la línea " << previous->text << endl;
+        exit(1);
+    }
+
+    CExp* condition = parseRelationalExp();
+
+    if (!match(Token::PD)) {
+        cout << "Error: Se esperaba un ')' en la línea " << previous->text << endl;
+        exit(1);
+    }
+
+    if (!check(Token::LLI)) {
+        cout << "Error: Se esperaba un '{' en la línea " << previous->text << endl;
+        exit(1);
+    }
+    StatementList* ifBody = parseStatementList();
+    if (!match(Token::LLD)) {
+        cout << "Error: Se esperaba un '}' en la línea " << previous->text << endl;
+        exit(1);
+    }
+    cout << "Current--: " << current->text << endl;
+    StatementList* elseBody = nullptr;
+    if (match(Token::ELSE)) {
+        if (!match(Token::LLI)) {
+            cout << "Error: Se esperaba un '{' en la línea " << previous->text << endl;
+            exit(1);
+        }
+        elseBody = parseStatementList();
+        if (!match(Token::LLD)) {
+            cout << "Error: Se esperaba un '}' en la línea " << previous->text << endl;
+            exit(1);
+        }
+    }
+    return new IfStmt(condition, ifBody, elseBody);
+}
+
+//Parseando un StepCondition: StepCondition ::= id '++' | id '--'
+StepCondition* Parser::parseStepCondition(){
+    if (!match(Token::ID)) {
+        cout << "Error: Se esperaba un identificador en la línea " << previous->text << endl;
+        exit(1);
+    }
+    string id = previous->text;
+    if (!check(Token::PLUS_PLUS) && !check(Token::MINUS_MINUS)) {
+        exit(1);
+    }
+    return new StepCondition(id);
+}
+
+// Parseando una sentencia for: ForStmt ::= 'for' '(' Assignment CExp ';' Assignment ')' '{' StmtList '}'
+
+ForStmt* Parser::parseForStmt(){
+    if (!match(Token::FOR)) {
+        cout << "Error: Se esperaba un 'for' en la línea " << previous->text << endl;
+        exit(1);
+    }
+    if (!check(Token::PI)) {
+        cout << "Error: Se esperaba un '(' en la línea " << previous->text << endl;
+        exit(1);
+    }
+    cout << "Current: " << current->text << endl;
+    current = scanner->nextToken();
+    if(!match(Token::INT) && !match(Token::LONG) && !match(Token::FLOAT) && !match(Token::DOUBLE) && !match(Token::CHAR)){
+        cout << "Error: Se esperaba un tipo de dato en la línea " << previous->text << endl;
+        exit(1);
+    }
+    Assignment* init = parseAssignment();
+    //Parsear una expresión relacional
+    
+    CExp* condition = parseRelationalExp();
+    if (!match(Token::SEMICOLON)) {
+        cout << "Error: Se esperaba un ';' en la línea " << previous->text << endl;
+        exit(1);
+    }
+    //current = scanner->nextToken();
+    StepCondition* step = parseStepCondition();
+    current = scanner->nextToken();
+    if (!match(Token::PD)) {
+        cout << "Error: Se esperaba un ')' en la línea " << previous->text << endl;
+        exit(1);
+    }
+    if (!match(Token::LLI)) {
+        cout << "Error: Se esperaba un '{' en la línea " << previous->text << endl;
+        exit(1);
+    }
+    StatementList* body = parseStatementList();
+    if (!match(Token::LLD)) {
+        cout << "Error: Se esperaba un '}' en la línea " << previous->text << endl;
+        exit(1);
+    }
+    return new ForStmt(init, condition, step, body);
+}
+
+// Parseando una lista de sentencias: StmtList ::= Stmt StmtList | ε
+
+StatementList* Parser::parseStatementList() {
+    StatementList* stmtList = new StatementList();
+    while (!check(Token::LLD) && !isAtEnd()) {
+        stmtList->add(parseStatement());
+    }
+    return stmtList;
+}
+
+// Parseando una sentencia: Stmt ::= Assignment | PrintStmt | ReturnStmt | IfStmt | ForStmt
+
+Stmt* Parser::parseStatement() {
+    if (check(Token::IF)) {
+        return parseIfStmt();
+    } else if (check(Token::ID)) {
+        return parseAssignment();
+    } else if (check(Token::PRINTF)) {
+        return parsePrintStmt();
+    } else if (check(Token::RETURN)) {
+        return parseReturnStmt();
+    } else if (check(Token::FOR)) {
+        return parseForStmt();
+    } else {
+        advance();
+    }    return nullptr;
+}
+
+
+// Parseando una declaración de variable: VarDec ::= Type id ';'
+VarDec* Parser::parseVarDec() {
+    // cout << "Parseando una declaración de variable..." << endl;
+    // cout << "Current2: " << current->text << endl; //x
+    // cout << "Previous: " << previous->text << endl; //int}
+
+    // Verificar si el token actual es un tipo de dato
+    if (!(match(Token::INT) || match(Token::LONG))) {
+        if(check(Token::LLD)){
+            cout <<"Parsing exitoso" << endl;
+        }
+        cout << "Error: Se esperaba un tipo de dato en la línea " << previous->text << endl;
+        exit(1);
+    }
+    // cout << "Antes: " << current->text << endl; //int
+    //Swappear current por previous sin perder los valores 
+
+    // cout << "Después: " << current->text << endl; //int
+    string type = previous->text;  // Guardamos el tipo de dato
+    // cout << "Type: " << type << endl;
+
+    if (!match(Token::ID)) {
+        // cout <<current->text << endl;
+        cout << "Error: Se esperaba un identificador en la línea " << current->text << endl;
+    }
+    // cout <<"Hola";
+    string id = previous->text;  // Guardamos el identificador
+    // cout <<"ID: " << id << endl;
+    // cout <<"Type " << type << endl;
+    if (!match(Token::SEMICOLON)) {
+        cout << "Error: Se esperaba un ';' en la línea " << previous->text << endl;
+        exit(1);
+    }
+    return new VarDec(type, id);  // Crear y devolver el nodo de la declaración de variable
+}
+
+
+// Parseando una lista de declaraciones de variables: VarDecList ::= VarDec VarDecList | ε
+VarDecList* Parser::parseVarDecList() {
+    VarDecList* varDecList = new VarDecList();
+    while (check(Token::INT) || check(Token::LONG)) {
+        varDecList->add(parseVarDec());
+    }
+    return varDecList;
+}
+
+// Parseando un parámetro: Param ::= Type id
+
+Param* Parser::parseParam() {
+    
+    if (match(Token::INT) || match(Token::LONG) || match(Token::FLOAT) || match(Token::DOUBLE) || match(Token::CHAR)) {
+        cout << "Parseando un parámetro..." << endl;
+    }
+    string type = previous->text;
+    if (!match(Token::ID)) {
+        cout << "Error: Se esperaba un identificador en la línea " << previous->text << endl;
+        exit(1);
+    }
+    string id = previous->text;
+    return new Param(type, id);
+}
+
+// Parseando una lista de parámetros: ParamList ::= Param (',' Param)* | ε
+
+ParamList* Parser::parseParamList() {
+    ParamList* paramList = new ParamList();
+    while (check(Token::INT) || check(Token::LONG) || check(Token::FLOAT) || check(Token::DOUBLE) || check(Token::CHAR)) {
+        paramList->add(parseParam());
+        if (!match(Token::COMMA)) {
+            break;
+        }
+    }
+    return paramList;
+}
+
+// Parseando una declaración de función: FuncDecl ::= Type id '(' ParamList ')' '{' VarDecList StmtList ReturnStmt '}'
+
+FuncDecl* Parser::parseFuncDecl() {
+
+    if (!match(Token::INT) && !match(Token::LONG) && !match(Token::FLOAT) && !match(Token::DOUBLE) && !match(Token::CHAR) && !match(Token::VOID)) {
+        cout << "Error: Se esperaba un tipo de dato en la línea " << previous->text << endl;
+        exit(1);
+    }
+    string type = previous->text;
+
+    if (!match(Token::ID)) {
+        cout << "Error: Se esperaba un identificador para la función en la línea " << previous->text << endl;
+        exit(1);
+    }
+    string name = previous->text;
+
+    if (!match(Token::PI)) {
+        cout << "Error: Se esperaba un '(' en la línea " << previous->text << endl;
+        exit(1);
+    }
+    ParamList* params = parseParamList();
+    for (Param* p : params->params) {
+        cout << "Tipo: " << p->type << ", ID: " << p->name << endl;
+    }
+    if(!match(Token::PD)){
+        cout << "Error: Se esperaba un ')' en la línea " << previous->text << endl;
+        exit(1);
+    }
+
+    if (!match(Token::LLI)) {
+        cout << "Error: Se esperaba un '{' en la línea " << previous->text << endl;
+        exit(1);
+    }
+    VarDecList* varDecs = parseVarDecList();
+    StatementList* stmts = parseStatementList();
+    ReturnStatement* ret = parseReturnStmt();
+    if (!match(Token::LLD )) {
+        cout << "Error: Se esperaba un '}' en la línea " << previous->text << endl;
+        exit(1);
+    }
+    return new FuncDecl(type, name, params, varDecs, stmts, ret);
+}
+
+// Parseando una lista de funciones con mensajes: FuncList ::= FuncDecl FuncList | ε
+
+FuncList* Parser::parseFuncList() {
+
+    FuncList* funcList = new FuncList();
+    while (!isAtEnd()) {
+        funcList->add(parseFuncDecl());
+    }
+    return funcList;
+}
+
+//Quiero parsear algo asi: suma(x, y) donde ArgsList es x, y 
+// Parseando una lista de argumentos: ArgList ::= CExp (',' CExp)* | ε | 
+
+ArgList* Parser::parseArgList() {
+    ArgList* argList = new ArgList();
+    while (check(Token::ID) || check(Token::NUM) || check(Token::PI)) {
+        CExp* arg = parseExp();
+        argList->add(arg);
+        if (!match(Token::COMMA)) {
+            break;
+        }
+    }
+    return argList;
+}
+
+// Parseando una  FuncCallStmt ::= FuncCallExp ';'
+FuncCallStmt* Parser::parseFuncCallStmt() {
+    FuncCallExp* exp = parseFuncCallExp();
+    if (!match(Token::SEMICOLON)) {
+        cout << "Error: Se esperaba un ';' en la línea " << previous->text << endl;
+        exit(1);
+    }
+    return new FuncCallStmt(exp);
+}
+
+// Parseando una FuncCallExp ::= ID '(' ArgList ')'
+FuncCallExp* Parser::parseFuncCallExp() {
+    //Cambiar los valores de current con el token anterior
+
+    // if (!match(Token::ID)) {
+    //     cout << "Error: Se esperaba un identificador en la línea " << previous->text << endl;
+    //     exit(1);
+    // }
+    string id = previous->text;
+    if (!match(Token::PI)) {
+        cout << "Error: Se esperaba un '(' en la línea " << previous->text << endl;
+        exit(1);
+    }
+    ArgList* args = parseArgList();
+    if (!match(Token::PD)) {
+        cout << "Error: Se esperaba un ')' en la línea " << previous->text << endl;
+        exit(1);
+    }
+    return new FuncCallExp(id, args);
+}
+
+// Parseando un programa: Program ::= FuncList
+
+Program* Parser::parseProgram() {
+    FuncList* funcs = parseFuncList();
+    if (!isAtEnd()) {
+        cout << "Error: Tokens adicionales después del final del programa" << endl;
+        exit(1);
+    }
+    return new Program(funcs);
+}
+
+
+// Constructor de la clase Parser
 Parser::Parser(Scanner* sc):scanner(sc) {
     previous = NULL;
     current = scanner->nextToken();
@@ -47,349 +564,4 @@ Parser::Parser(Scanner* sc):scanner(sc) {
     }
 }
 
-Program* Parser::parseProgram() {
-    StmList* s = parseStmtList();
-    if (s == NULL) {
-        throw runtime_error("Error: se esperaba una lista de declaraciones.");
-    }
-    Program* p = new Program();
-    p->add(s);
-    return p;
-}
-
-//StmtList      ::= Stmt (';' Stmt)*
-StmList* Parser::parseStmtList() {
-    StmList* s = new StmList();
-    try {
-        while (!isAtEnd()) {
-            s->add(parseStatement());
-            if (!isAtEnd() && !match(Token::SEMICOLON)) {
-                throw runtime_error("Error: se esperaba ';' al final de la declaración.");
-            }
-        }
-    } catch (const exception& e) {
-        cout << "Error durante el parsing: " << e.what() << endl;
-        delete s;
-        exit(1);
-    }
-    return s;
-}
-
-//Stmt::= VarDecl|AssignStmt|IfStmt|ForStmt|FuncCall|FuncDecl|PrintStmt
-Stmt* Parser::parseStatement() {
-    Stmt* s = NULL;
-
-    if (check(Token::INT) || check(Token::LONG) || check(Token::FLOAT) || 
-        check(Token::DOUBLE) || check(Token::CHAR) || check(Token::STRING) || check(Token::VOID)) {
-        s = parseVarDecl();
-    } else if (check(Token::ID)) {
-        Token* lookahead = current;  
-        advance();
-        if (check(Token::ASSIGN)) {
-            previous = lookahead; 
-            current = lookahead;
-            s = parseAssignStmt();
-        } else if (check(Token::PI)) {
-            previous = lookahead; 
-            current = lookahead;
-            s = parseFuncCall();
-        } else {
-            cout << "Error: token inesperado después del identificador en declaración." << endl;
-            exit(1);
-        }
-    } else if (check(Token::IF)) {
-        s = parseIfStmt();
-    } else if (check(Token::FOR)) {
-        s = parseForStmt();
-    } else if (check(Token::PRINTF)) {
-        s = parsePrintStmt();
-    } else if (check(Token::INT) || check(Token::LONG) || check(Token::FLOAT) || 
-               check(Token::DOUBLE) || check(Token::CHAR) || check(Token::STRING) || check(Token::VOID)) {
-        s = parseFuncDecl();
-    } else {
-        cout << "Error: declaración desconocida." << endl;
-        exit(1);
-    }
-
-    return s;
-}
-
-VarDecl* Parser::parseVarDecl(){
-    Type t = parseType();
-    if (!match(Token::ID)) {
-        cout << "Error: se esperaba un identificador después del tipo." << endl;
-        exit(1);
-    }
-    string id = previous->text;
-    return new VarDecl(t, id);
-}
-
-AssignStmt* Parser::parseAssignStmt(){
-    if (!match(Token::ID)) {
-        cout << "Error: se esperaba un identificador después del tipo." << endl;
-        exit(1);
-    }
-    string id = previous->text;
-    if (!match(Token::ASSIGN)) {
-        cout << "Error: se esperaba un '=' después del identificador." << endl;
-        exit(1);
-    }
-    AExp* e = parseAExp();
-    return new AssignStmt(id, e);
-}
-
-IfStmt* Parser::parseIfStmt(){
-    if (!match(Token::IF)) {
-        cout << "Error: se esperaba un 'if'." << endl;
-        exit(1);
-    }
-    if (!match(Token::PI)) {
-        cout << "Error: se esperaba un '(' después del 'if'." << endl;
-        exit(1);
-    }
-    CExp* c = parseCExp();
-    if (!match(Token::PD)) {
-        cout << "Error: se esperaba un ')' después de la condición." << endl;
-        exit(1);
-    }
-    if(!match(Token::LLI)){
-        cout << "Error: se esperaba un '{' después de la condición." << endl;
-        exit(1);
-    }
-    StmList* t = parseStmtList();
-    if(!match(Token::LLD)){
-        cout << "Error: se esperaba un '}' después de la condición." << endl;
-        exit(1);
-    }
-    StmList* e = NULL;
-    if (match(Token::ELSE)) {
-        if(!match(Token::LLI)){
-            cout << "Error: se esperaba un '{' después del 'else'." << endl;
-            exit(1);
-        }
-        e = parseStmtList();
-        if(!match(Token::LLD)){
-            cout << "Error: se esperaba un '}' después del 'else'." << endl;
-            exit(1);
-        }
-    }
-    return new IfStmt(c, t, e);
-}
-
-
-ForStmt* Parser::parseForStmt(){
-    if (!match(Token::FOR)) {
-        cout << "Error: se esperaba un 'for'." << endl;
-        exit(1);
-    }
-    if (!match(Token::PI)) {
-        cout << "Error: se esperaba un '(' después del 'for'." << endl;
-        exit(1);
-    }
-    VarDecl* i = parseVarDecl();
-    if (!match(Token::SEMICOLON)) {
-        cout << "Error: se esperaba un ';' después de la inicialización." << endl;
-        exit(1);
-    }
-    CExp* c = parseCExp();
-    if (!match(Token::SEMICOLON)) {
-        cout << "Error: se esperaba un ';' después de la condición." << endl;
-        exit(1);
-    }
-    AssignStmt* u = parseAssignStmt();
-    if (!match(Token::PD)) {
-        cout << "Error: se esperaba un ')' después de la actualización." << endl;
-        exit(1);
-    }
-    if(!match(Token::LLI)){
-        cout << "Error: se esperaba un '{' después de la actualización." << endl;
-        exit(1);
-    }
-    StmList* b = parseStmtList();
-    if(!match(Token::LLD)){
-        cout << "Error: se esperaba un '}' después de la actualización." << endl;
-        exit(1);
-    }
-    return new ForStmt(i, c, u, b);
-}
-
-//FuncCall      ::= id '(' [AExp (',' AExp)*] ')'
-FuncCall* Parser::parseFuncCall(){
-    if (!match(Token::ID)) {
-        cout << "Error: se esperaba un identificador después del tipo." << endl;
-        exit(1);
-    }
-    string id = previous->text;
-    if (!match(Token::PI)) {
-        cout << "Error: se esperaba un '(' después del identificador." << endl;
-        exit(1);
-    }
-    FuncCall* f = new FuncCall(id);
-    if(!check(Token::PD)){
-        f->add(parseAExp());
-        while(match(Token::COMMA)){
-            f->add(parseAExp());
-        }
-    }
-
-    if(!match(Token::PD)){
-        cout << "Error: se esperaba un ')' después de la lista de argumentos." << endl;
-        exit(1);
-    }
-    return f;
-}
-
-//FuncDecl      ::= Type id '(' [VarDecl (',' VarDecl)*] ')' '{' StmtList '}'
-FuncDecl* Parser::parseFuncDecl(){
-    Type t = parseType();
-    if (!match(Token::ID)) {
-        cout << "Error: se esperaba un identificador después del tipo." << endl;
-        exit(1);
-    }
-    string id = previous->text;
-    if (!match(Token::PI)) {
-        cout << "Error: se esperaba un '(' después del identificador." << endl;
-        exit(1);
-    }
-    FuncDecl* f = new FuncDecl(t, id);
-    if(!check(Token::PD)){
-        f->add(parseVarDecl());
-        while(match(Token::COMMA)){
-            f->add(parseVarDecl());
-        }
-    }
-    if(!match(Token::PD)){
-        cout << "Error: se esperaba un ')' después de la lista de argumentos." << endl;
-        exit(1);
-    }
-    if(!match(Token::LLI)){
-        cout << "Error: se esperaba un '{' después de la lista de argumentos." << endl;
-        exit(1);
-    }
-    f->body = parseStmtList();
-    if(!match(Token::LLD)){
-        cout << "Error: se esperaba un '}' después de la lista de argumentos." << endl;
-        exit(1);
-    }
-    return f;
-}
-
-//Print ::= 'printf' '(' FormatString ',' AExp ')'
-PrintStmt* Parser::parsePrintStmt(){
-    if (!match(Token::PRINTF)) {
-        cout << "Error: se esperaba un 'printf'." << endl;
-        exit(1);
-    }
-    if (!match(Token::PI)) {
-        cout << "Error: se esperaba un '(' después del 'printf'." << endl;
-        exit(1);
-    }
-    if(!match(Token::STRING)){
-        cout << "Error: se esperaba una cadena de formato después del 'printf'." << endl;
-        exit(1);
-    }
-    
-    if (!match(Token::COMMA)) {
-        cout << "Error: se esperaba una ',' después de la cadena de formato." << endl;
-        exit(1);
-    }
-    AExp* e = parseAExp();
-    if (!match(Token::PD)) {
-        cout << "Error: se esperaba un ')' después de la expresión." << endl;
-        exit(1);
-    }
-    return new PrintStmt(previous->text);
-}
-
-Type Parser::parseType(){
-    if (match(Token::INT)) return INT_T;
-    if (match(Token::LONG)) return LONG_T;
-    if (match(Token::FLOAT)) return FLOAT_T;
-    if (match(Token::DOUBLE)) return DOUBLE_T;
-    if (match(Token::CHAR)) return CHAR_T;
-    if (match(Token::VOID)) return VOID_T;
-    if (match(Token::STRING)) return STRING_T;
-    cout << "Error: se esperaba un tipo de dato." << endl;
-    exit(1);
-}
-
-CExp* Parser::parseCExp(){
-    AExp* l = parseAExp();
-    CompOp o;
-    if (match(Token::LT)) o = LT_OP;
-    else if (match(Token::LE)) o = LE_OP;
-    else if (match(Token::EQ)) o = EQ_OP;
-    else if (match(Token::GE)) o = GE_OP;
-    else if (match(Token::GT)) o = GT_OP;
-    else if (match(Token::NE)) o = NE_OP;
-    else {
-        cout << "Error: se esperaba un operador de comparación." << endl;
-        exit(1);
-    }
-    Exp* r = parseAExp();
-    return new CExp(l, r, o);
-}
-
-AExp* Parser::parseAExp(){
-    AExp* a = new AExp(parseTerm());
-    while (match(Token::PLUS) || match(Token::MINUS)) {
-        BinaryOp o;
-        if (previous->type == Token::PLUS) o = PLUS_OP;
-        else o = MINUS_OP;
-        a->add(parseTerm(), o);
-    }
-    return a;
-}
-
-Term* Parser::parseTerm(){
-    Term* t = new Term(parseFactor());
-    while (match(Token::MUL) || match(Token::DIV)) {
-        BinaryOp o;
-        if (previous->type == Token::MUL) o = MUL_OP;
-        else o = DIV_OP;
-        t->add(parseFactor(), o);
-    }
-    return t;
-}
-
-Factor* Parser::parseFactor(){
-    if (match(Token::PI)) {
-        Exp* e = parseAExp();
-        if (!match(Token::PD)) {
-            cout << "Error: se esperaba un ')' después de la expresión." << endl;
-            exit(1);
-        }
-        return new Factor(e);
-    }
-    if (match(Token::NUM)) {
-        return new Factor(previous->text);
-    }
-    if (match(Token::ID)) {
-        return new Factor(previous->text);
-    }
-    cout << "Error: se esperaba un número o un identificador." << endl;
-    exit(1);
-}
-
-//FormatString  ::= " (%d | %ld | %f | %c | %s )"
-
-// FormatString* Parser::parseFormatString(){
-//     if (!match(Token::COMILLA)) {
-//         cout << "Error: se esperaba una comilla después de 'printf'." << endl;
-//         exit(1);
-//     }
-//     if (!match(Token::COMILLA)) {
-//         cout << "Error: se esperaba una comilla después de la primera comilla." << endl;
-//         exit(1);
-//     }
-//     if (match(Token::PTJ)) {
-//         return new FormatString();
-//     }
-//     if (match(Token::INT)) return new FormatString(INT_T);
-//     if (match(Token::LONG)) return new FormatString(LONG_T);
-//     if (match(Token::FLOAT)) return new FormatString(FLOAT_T);
-//     if (match(Token::CHAR)) return new FormatString(CHAR_T);
-//     if (match(Token::STRING)) return new FormatString(STRING_T);
-//     cout << "Error: se esperaba un tipo de dato." << endl;
-//     exit(1);
-// }
+/*----------------------------------------------------------------------------------------------------------------------------------------*/

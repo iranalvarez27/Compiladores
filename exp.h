@@ -2,170 +2,289 @@
 #define EXP_H
 
 #include <string>
-#include <unordered_map>
 #include <list>
+#include <unordered_map>
+#include "visitor.h"
 
+using namespace std;
+
+// Enumeraciones para operadores relacionales y binarios
+enum RelOp { LT_OP, LE_OP, EQ_OP, GT_OP, GE_OP, NE_OP };
 enum BinaryOp { PLUS_OP, MINUS_OP, MUL_OP, DIV_OP };
-enum CompOp { LT_OP, LE_OP, EQ_OP, GE_OP, GT_OP, NE_OP };
-enum Type { INT_T, LONG_T, FLOAT_T, DOUBLE_T, CHAR_T, VOID_T, STRING_T };
 
-// Clase base Stmt
-class Stmt {
-    public:
-        virtual ~Stmt() = 0;
-};
-
-// VarDecl ::= Type id
-class VarDecl : public Stmt {
-    public:
-        Type type;
-        std::string id;
-        VarDecl(Type t, std::string i);
-        ~VarDecl();
-};
-
-// StmList ::= Stmt (';' Stmt)*
-class StmList {
-    public:
-        StmList();
-        StmList(Stmt* s);
-        void add(Stmt* s);
-        ~StmList();
-    
-    private:
-        std::list<Stmt*> slist;
-};
-
-// Clase base Exp
-class Exp {
-    public:
-        virtual ~Exp() = 0;
-        static char binopToChar(BinaryOp op);
-};
-
-// CExp ::= AExp ( '<' | '<=' | '==' | '>=' | '>' | '!=' ) AExp
+// Representa cualquier expresión del lenguaje
 class CExp {
-    public:
-        Exp* left;
-        Exp* right;
-        CompOp op;
-        CExp(Exp* l, Exp* r, CompOp o);
-        ~CExp();
+public:
+    virtual int accept(Visitor* visitor) = 0;
+    virtual ~CExp() = 0;
+    static string binopToChar(BinaryOp op){
+        switch (op) {
+            case BinaryOp::PLUS_OP: return "+";
+            case BinaryOp::MINUS_OP: return "-";
+            case BinaryOp::MUL_OP: return "*";
+            case BinaryOp::DIV_OP: return "/";
+        }
+        return "";
+    }
+    static string relopToChar(RelOp op){
+        switch (op) {
+            case RelOp::LT_OP: return "<";
+            case RelOp::LE_OP: return "<=";
+            case RelOp::EQ_OP: return "==";
+            case RelOp::GT_OP: return ">";
+            case RelOp::GE_OP: return ">=";
+            case RelOp::NE_OP: return "!=";
+        }
+        return "";
+    }
 };
 
-// AExp ::= Term (('+' | '-') Term)*
-class AExp : public Exp {
-    public:
-        std::list<Exp*> terms;
-        std::list<BinaryOp> ops;
-        AExp(Exp* t);
-        void add(Exp* t, BinaryOp o);
-        ~AExp();
+// Expresión binaria
+class BinaryExp : public CExp {
+public:
+    CExp* left;
+    CExp* right;
+    BinaryOp op;
+    BinaryExp(CExp* left, CExp* right, BinaryOp op);
+    int accept(Visitor* visitor);
+    ~BinaryExp();
 };
 
-// Term ::= Factor (('*' | '/') Factor)*
-class Term : public Exp {
-    public:
-        std::list<Exp*> factors;
-        std::list<BinaryOp> ops;
-        Term(Exp* f);
-        void add(Exp* f, BinaryOp o);
-        ~Term();
+// Expresión relacional
+class RelationalExp : public CExp {
+public:
+    CExp* left;
+    CExp* right;
+    RelOp op;
+    RelationalExp(CExp* left, CExp* right, RelOp op);
+    int accept(Visitor* visitor);
+    ~RelationalExp();
 };
 
-// Factor ::= '(' AExp ')' | num | id
-class Factor : public Exp {
-    public:
-        Exp* e;
-        Factor(Exp* e);
-        Factor(const std::string& s);
-        ~Factor();
+// Factor: id, número o expresión entre paréntesis
+class Factor : public CExp {
+public:
+    virtual ~Factor() = 0;
 };
 
-// // FormatString para la impresión
-// class FormatString {
-//     public:
-//         std::string format;
-//         std::list<Exp*> args;
-//         FormatString();
-//         FormatString(int type);
-//         void add(Exp* e);
-//         ~FormatString();
-// };
-
-// AssignStmt ::= id '=' Exp
-class AssignStmt : public Stmt {
-    public:
-        std::string id;
-        Exp* rhs;
-        AssignStmt(std::string id, Exp* e);
-        ~AssignStmt();
+// Identificador
+class IdentifierExp : public Factor {
+public:
+    string name;
+    IdentifierExp(const string& name);
+    int accept(Visitor* visitor);
+    ~IdentifierExp();
 };
 
-// IfStmt ::= 'if' '(' CExp ')' StmList ('else' StmList)?
-class IfStmt : public Stmt {
-    public:
-        CExp* cond;
-        StmList* then;
-        StmList* els;
-        IfStmt(CExp* c, StmList* t, StmList* e);
-        ~IfStmt();
+// Número
+class NumberExp : public Factor {
+public:
+    int value;
+    NumberExp(int value);
+    int accept(Visitor* visitor);
+    ~NumberExp();
 };
 
-// ForStmt ::= 'for' '(' Stmt CExp Stmt ')' StmList
-//ForStmt       ::= 'for' '(' VarDecl ';' CExp ';' Assignment ')' '{' StmtList '}'
-class ForStmt : public Stmt {
-    public:
-        Stmt* init;
-        CExp* cond;
-        Stmt* update;
-        StmList* body;
-        ForStmt(Stmt* i, CExp* c, Stmt* u, StmList* b);
-        ~ForStmt();
+// Expresión de llamada a función: FuncCallExp ::= id '(' ArgList ')'
+class FuncCallExp : public Factor {
+public:
+    string name;
+    ArgList* args;
+    FuncCallExp(string name, ArgList* args);
+    int accept(Visitor* visitor);
+    ~FuncCallExp();
 };
 
-// FuncCall ::= id '(' (Exp (',' Exp)*)? ')'
-class FuncCall : public Stmt {
-    public:
-        std::string id;
-        std::list<Exp*> args;
-        FuncCall(std::string i);
-        void add(Exp* e);
-        ~FuncCall();
+// Declaración de variable
+class VarDec {
+public:
+    string type;
+    string varName;
+    VarDec(string type, string varName);
+    int accept(Visitor* visitor);
+    ~VarDec();
 };
 
-// FuncDecl ::= Type id '(' (VarDecl (',' VarDecl)*)? ')' StmList
-class FuncDecl : public Stmt {
-    public:
-        Type type;
-        std::string id;
-        std::list<VarDecl*> params;
-        StmList* body;
-        FuncDecl(Type t, std::string i);
-        void add(VarDecl* v);
-        ~FuncDecl();
+// Lista de declaraciones de variables
+class VarDecList {
+public:
+    list<VarDec*> vardecs;
+    VarDecList();
+    void add(VarDec* vardec);
+    int accept(Visitor* visitor);
+    ~VarDecList();
 };
 
-// Print ::= 'printf' '(' STRING (',' AExp)* ')'
+// Declaración de parámetro
+class Param {
+public:
+    string type;
+    string name;
+    Param(string type, string name);
+    int accept(Visitor* visitor);
+    ~Param();
+};
+
+// Lista de parámetros
+class ParamList {
+public:
+    list<Param*> params;
+    ParamList();
+    void add(Param* param);
+    int accept(Visitor* visitor);
+    ~ParamList();
+};
+
+// Declaración de función
+class FuncDecl {
+public:
+    string type;
+    string name;
+    ParamList* params;
+    VarDecList* varDecs;
+    StatementList* stmts;
+    ReturnStatement* returnStmt;
+    FuncDecl(string type, string name, ParamList* params, VarDecList* varDecs, StatementList* stmts, ReturnStatement* returnStmt);
+    int accept(Visitor* visitor);
+    ~FuncDecl();
+};
+
+// Lista de declaraciones de funciones
+class FuncList {
+public:
+    list<FuncDecl*> functions;
+    FuncList();
+    void add(FuncDecl* funcDecl);
+    int accept(Visitor* visitor);
+    ~FuncList();
+};
+
+// Representa cualquier sentencia del lenguaje
+class Stmt {
+public:
+    virtual int accept(Visitor* visitor) = 0;
+    virtual ~Stmt() = 0;
+};
+
+// Asignación
+class Assignment : public Stmt {
+public:
+    string id;
+    CExp* rhs;
+    Assignment(string id, CExp* rhs);
+    int accept(Visitor* visitor);
+    ~Assignment();
+};
+
+// Sentencia de impresión
 class PrintStmt : public Stmt {
-    public:
-        std::string format;
-        std::list<Exp*> e;
-
-        PrintStmt(std::string fmt);
-        void add(Exp* e);
-        ~PrintStmt();
+public:
+    string format;
+    CExp* exp;
+    PrintStmt(string format, CExp* exp);
+    int accept(Visitor* visitor);
+    ~PrintStmt();
 };
 
-// Program ::= StmList*
+// Sentencia de retorno
+class ReturnStatement : public Stmt {
+public:
+    CExp* exp;
+    ReturnStatement(CExp* exp);
+    int accept(Visitor* visitor);
+    ~ReturnStatement();
+};
+
+// Sentencia if-else
+class IfStmt : public Stmt {
+public:
+    CExp* condition;
+    StatementList* thenBody;
+    StatementList* elseBody;
+    IfStmt(CExp* condition, StatementList* thenBody, StatementList* elseBody);
+    int accept(Visitor* visitor);
+    ~IfStmt();
+};
+
+// Step condicion: StepCondition ::= id '++' | id '--' 
+class StepCondition : public Stmt {
+public:
+    string id;
+    StepCondition(string id);
+    int accept(Visitor* visitor);
+    ~StepCondition();
+};
+
+// Sentencia for
+class ForStmt : public Stmt {
+public:
+    Assignment* init;
+    CExp* condition;
+    StepCondition* step;
+    StatementList* body;
+    ForStmt(Assignment* init, CExp* condition, StepCondition* step, StatementList* body);
+    int accept(Visitor* visitor);
+    ~ForStmt();
+};
+
+// Lista de sentencias
+class StatementList {
+public:
+    list<Stmt*> statements;
+    StatementList();
+    void add(Stmt* statement);
+    int accept(Visitor* visitor);
+    ~StatementList();
+};
+
+//FuncCallStmt ::= FuncCall ';'
+class FuncCallStmt : public Stmt {
+public:
+    FuncCallExp* funcCall;
+    FuncCallStmt(FuncCallExp* funcCall);
+    int accept(Visitor* visitor);
+    ~FuncCallStmt();
+};
+
+//Operaciones ::= id '=' CExp ';'
+class Operaciones : public Stmt {
+public:
+    string id;
+    CExp* rhs;
+    Operaciones(string id, CExp* rhs);
+    int accept(Visitor* visitor);
+    ~Operaciones();
+};
+
+// Clase tipo
+class Type {
+public:
+    string type;
+    Type(string type);
+    int accept(Visitor* visitor);
+    ~Type();
+};
+
+// Lista de argumentos: ArgList ::= CExp (',' CExp)* | ε
+class ArgList {
+public:
+    list<CExp*> args;
+    ArgList();
+    void add(CExp* arg);
+    int accept(Visitor* visitor);
+    ~ArgList();
+
+};
+
+
+
+// Programa completo
 class Program {
-    public:
-        Program();
-        void add(StmList* s);
-        ~Program();
-    
-    private:
-        std::list<StmList*> slist;
+public:
+    FuncList* functions;
+    Program(FuncList* functions);
+    int accept(Visitor* visitor);
+    ~Program();
 };
 
 #endif // EXP_H

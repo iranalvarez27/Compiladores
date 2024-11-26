@@ -1,143 +1,207 @@
 #include "exp.h"
-#include <iostream>
+#include "visitor.h"
 
-// Implementación de Stmt (destructor virtual)
+using namespace std;
+
+// Implementación de destructores y constructores
+// ==== Stm ====
 Stmt::~Stmt() {}
 
-// Implementación de Exp (destructor virtual)
-Exp::~Exp() {}
+// ==== CExp ====
+CExp::~CExp() {}
 
-char Exp::binopToChar(BinaryOp op) {
-    switch (op) {
-        case PLUS_OP: return '+';
-        case MINUS_OP: return '-';
-        case MUL_OP: return '*';
-        case DIV_OP: return '/';
-    }
-    return '?';
-}
+// ==== BinaryExp ====
+BinaryExp::BinaryExp(CExp* left, CExp* right, BinaryOp op) 
+    : left(left), right(right), op(op) {}
 
-// Implementación de Program
-Program::Program() {}
-Program::~Program() {
-    for (StmList* s : slist) {
-        delete s;
-    }
-}
-void Program::add(StmList* s) {
-    slist.push_back(s);
-}
-
-// Implementación de StmList
-StmList::StmList() {}
-StmList::StmList(Stmt* s) {
-    add(s);
-}
-void StmList::add(Stmt* s) {
-    slist.push_back(s);
-}
-StmList::~StmList() {
-    for (Stmt* s : slist) {
-        delete s;
-    }
-}
-
-// Implementación de VarDecl
-VarDecl::VarDecl(Type t, std::string i) : type(t), id(i) {}
-VarDecl::~VarDecl() {}
-
-// Implementación de AssignStmt
-AssignStmt::AssignStmt(std::string id, Exp* e) : id(id), rhs(e) {}
-AssignStmt::~AssignStmt() {
-    delete rhs;
-}
-
-// Implementación de IfStmt
-IfStmt::IfStmt(CExp* c, StmList* t, StmList* e) : cond(c), then(t), els(e) {}
-IfStmt::~IfStmt() {
-    delete cond;
-    delete then;
-    delete els;
-}
-
-// Implementación de ForStmt
-ForStmt::ForStmt(Stmt* i, CExp* c, Stmt* u, StmList* b) : init(i), cond(c), update(u), body(b) {}
-ForStmt::~ForStmt() {
-    delete init;
-    delete cond;
-    delete update;
-    delete body;
-}
-
-// Implementación de FuncCall
-FuncCall::FuncCall(std::string i) : id(i) {}
-FuncCall::~FuncCall() {
-    for (Exp* e : args) {
-        delete e;
-    }
-}
-void FuncCall::add(Exp* e) {
-    args.push_back(e);
-}
-
-// Implementación de FuncDecl
-FuncDecl::FuncDecl(Type t, std::string i) : type(t), id(i), body(new StmList()) {}
-FuncDecl::~FuncDecl() {
-    for (VarDecl* v : params) {
-        delete v;
-    }
-    delete body;
-}
-void FuncDecl::add(VarDecl* v) {
-    params.push_back(v);
-}
-
-// Implementación de PrintStmt
-PrintStmt::PrintStmt(std::string fmt): format(fmt) {}
-PrintStmt::~PrintStmt() {
-    for (Exp* e : e) {
-        delete e;
-    }
-}
-
-// Implementación de CExp
-CExp::CExp(Exp* l, Exp* r, CompOp o) : left(l), right(r), op(o) {}
-CExp::~CExp() {
+BinaryExp::~BinaryExp() {
     delete left;
     delete right;
 }
 
-// Implementación de AExp
-AExp::AExp(Exp* t) {
-    terms.push_back(t);
-}
-AExp::~AExp() {
-    for (Exp* term : terms) {
-        delete term;
-    }
-}
-void AExp::add(Exp* t, BinaryOp o) {
-    terms.push_back(t);
-    ops.push_back(o);
+// ==== RelationalExp ====
+RelationalExp::RelationalExp(CExp* left, CExp* right, RelOp op) 
+    : left(left), right(right), op(op) {}
+
+RelationalExp::~RelationalExp() {
+    delete left;
+    delete right;
 }
 
-// Implementación de Term
-Term::Term(Exp* f) {
-    factors.push_back(f);
-}
-Term::~Term() {
-    for (Exp* factor : factors) {
-        delete factor;
-    }
-}
-void Term::add(Exp* f, BinaryOp o) {
-    factors.push_back(f);
-    ops.push_back(o);
+// ==== Factor ====
+Factor::~Factor() {}
+
+// ==== IdentifierExp ====
+IdentifierExp::IdentifierExp(const string& name) : name(name) {}
+
+IdentifierExp::~IdentifierExp() {}
+
+// ==== NumberExp ====
+NumberExp::NumberExp(int value) : value(value) {}
+
+NumberExp::~NumberExp() {}
+
+// ==== FuncCallExp ====
+FuncCallExp::FuncCallExp(string name, ArgList* args) 
+    : name(name), args(args) {}
+
+FuncCallExp::~FuncCallExp() {
+    delete args;
 }
 
-// Implementación de Factor
-Factor::Factor(Exp* e) : e(e) {}
-Factor::Factor(const std::string& s) : e(nullptr) {}  // Implementación para cadenas
-Factor::~Factor() {
-    delete e;
+// ==== FuncCallStmt ====
+FuncCallStmt::FuncCallStmt(FuncCallExp* funcCall) 
+    : funcCall(funcCall) {}
+
+FuncCallStmt::~FuncCallStmt() {
+    delete funcCall;
 }
+
+// ==== Type ====
+Type::Type(string type) : type(type) {}
+Type::~Type() {}
+
+// ==== ArgList ====
+ArgList::ArgList() {}
+ArgList::~ArgList() {
+    for (CExp* arg : args) {
+        delete arg;
+    }
+}
+void ArgList::add(CExp* arg) {
+    args.push_back(arg);
+}
+
+// ==== VarDec ====
+VarDec::VarDec(string type, string varName) : type(type), varName(varName) {}
+
+VarDec::~VarDec() {}
+
+// ==== VarDecList ====
+VarDecList::VarDecList() {}
+
+void VarDecList::add(VarDec* vardec) {
+    vardecs.push_back(vardec);
+}
+
+VarDecList::~VarDecList() {
+    for (VarDec* vardec : vardecs) {
+        delete vardec;
+    }
+}
+
+// ==== Param ====
+Param::Param(string type, string name) : type(type), name(name) {}
+
+Param::~Param() {}
+
+// ==== ParamList ====
+ParamList::ParamList() {}
+
+void ParamList::add(Param* param) {
+    params.push_back(param);
+}
+
+ParamList::~ParamList() {
+    for (Param* param : params) {
+        delete param;
+    }
+}
+
+// ==== FuncDecl ====
+FuncDecl::FuncDecl(string type, string name, ParamList* params, VarDecList* varDecs, StatementList* stmts, ReturnStatement* returnStmt)
+    : type(type), name(name), params(params), varDecs(varDecs), stmts(stmts), returnStmt(returnStmt) {}
+
+FuncDecl::~FuncDecl() {
+    delete params;
+    delete varDecs;
+    delete stmts;
+    delete returnStmt;
+}
+
+
+// ==== FuncList ====
+FuncList::FuncList() {}
+
+void FuncList::add(FuncDecl* funcDecl) {
+    functions.push_back(funcDecl);
+}
+
+FuncList::~FuncList() {
+    for (FuncDecl* func : functions) {
+        delete func;
+    }
+}
+
+// ==== Assignment ====
+Assignment::Assignment(string id, CExp* rhs) 
+    : id(id), rhs(rhs) {}
+
+Assignment::~Assignment() {
+    delete rhs;
+}
+
+// ==== PrintStmt ====
+PrintStmt::PrintStmt(string format, CExp* exp) 
+    : format(format), exp(exp) {}
+
+PrintStmt::~PrintStmt() {
+    delete exp;
+}
+
+// ==== ReturnStatement ====
+ReturnStatement::ReturnStatement(CExp* exp) 
+    : exp(exp) {}
+
+ReturnStatement::~ReturnStatement() {
+    delete exp;
+}
+
+// ==== IfStmt ====
+IfStmt::IfStmt(CExp* condition, StatementList* thenBody, StatementList* elseBody) 
+    : condition(condition), thenBody(thenBody), elseBody(elseBody) {}
+
+IfStmt::~IfStmt() {
+    delete condition;
+    delete thenBody;
+    delete elseBody;
+}
+
+// ==== StepCondition ====
+StepCondition::StepCondition(string id) : id(id) {}
+
+StepCondition::~StepCondition() {
+    
+}
+
+// ==== ForStmt ====
+ForStmt::ForStmt(Assignment* init, CExp* condition, StepCondition* step, StatementList* body) 
+    : init(init), condition(condition), step(step), body(body) {}
+ForStmt::~ForStmt() {
+    delete init;
+    delete condition;
+    delete step;
+    delete body;
+}
+
+// ==== StatementList ====
+StatementList::StatementList() {}
+
+void StatementList::add(Stmt* statement) {
+    statements.push_back(statement);
+}
+
+StatementList::~StatementList() {
+    for (Stmt* stmt : statements) {
+        delete stmt;
+    }
+}
+
+// ==== Program ====
+Program::Program(FuncList* functions) 
+    : functions(functions) {}
+
+Program::~Program() {
+    delete functions;
+}
+
