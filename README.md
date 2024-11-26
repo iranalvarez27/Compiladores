@@ -2,7 +2,6 @@
 ## Integrantes 
 - Margiory Vanessa Alvarado Chavez
 - Irán María Álvarez Flores
-- Jean Pier ....
 
 ## Implementación de Gramática
 ### **Lenguaje C** 
