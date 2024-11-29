@@ -1,24 +1,23 @@
 Program ::= FuncList
-FuncList ::= FuncDecl FuncList | ε
-FuncDecl ::= Type id '(' ParamList ')' '{' VarDecList StmtList ReturnStmt '}'
-ParamList ::= Param (',' Param)* | ε
+FuncList ::= FuncDecl FuncList | FuncDecl
+FuncDecl ::= Type id '(' ParamList ')' '{' VarDecList StmtList '}'
+ParamList ::= Param (',' Param)* 
 Param ::= Type id
-VarDecList ::= VarDec VarDecList | ε
+VarDecList ::= VarDec VarDecList | VarDec
 VarDec ::= Type id ';'
 Type ::= 'int' | 'long'
-StmtList ::= Stmt StmtList | ε
+StmtList ::= Stmt StmtList | Stmt
 Stmt ::= Assignment
        | IfStmt
        | ForStmt
-       | FuncCallStmt
        | PrintStmt
+       | ReturnStmt
        
 Assignment ::= id '=' CExp ';' 
 IfStmt ::= 'if' '(' CExp ')' '{' StmtList '}' [ 'else' '{' StmtList '}' ]
 ForStmt ::= 'for' '(' Assignment CExp ';' StepCondition ')' '{' StmtList '}'
-FuncCallStmt ::= FuncCallExp ';'
 FuncCallExp ::= id '(' ArgList ')'
-ArgList ::= CExp (',' CExp)* | ε
+ArgList ::= CExp (',' CExp)*
 PrintStmt ::= 'printf' '(' STRING ',' CExp ')' ';'
 ReturnStmt ::= 'return' CExp ';'
 StepCondition ::= id '++' | id '--' 
@@ -26,8 +25,6 @@ CExp ::= Exp [ RelOp Exp ] | id '+' id ';'
 RelOp ::= '<' | '<=' | '==' | '>' | '>=' | '!='
 Exp ::= Term (( '+' | '-' ) Term)*
 Term ::= Factor (( '*' | '/' ) Factor)*
-Factor ::= id | Num | '(' CExp ')'
+Factor ::= id | Num | '(' CExp ')'| FuncCallExp
 Num ::= [0-9]+
 STRING ::= '"' .* '"'
-
-FARGS ::= 

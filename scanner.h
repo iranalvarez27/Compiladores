@@ -12,6 +12,7 @@ public:
     Scanner(const char* in_s);
     Token* nextToken();
     void reset();
+    void ignore();
     ~Scanner();
 };
 

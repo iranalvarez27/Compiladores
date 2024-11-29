@@ -11,6 +11,7 @@ Token::Token(Type type, const string& source, int first, int last):type(type) {
     text = source.substr(first, last);
 }
 
+
 std::ostream& operator << ( std::ostream& outs, const Token & tok )
 {
     switch (tok.type) {

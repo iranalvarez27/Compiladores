@@ -8,11 +8,13 @@ class Parser {
 private:
     Scanner* scanner;
     Token *current, *previous;
+
     bool match(Token::Type ttype);
     bool check(Token::Type ttype);
     bool advance();
     bool isAtEnd();
-    // list<Stmt*> parseStatementList();
+    void ignore();
+    void retreat();
     CExp* parseExp();
     CExp* parseTerm();
     CExp* parseFactor();
@@ -40,7 +42,6 @@ public:
     StepCondition* parseStepCondition();
     CExp* parseCExp();
     
-    //Type* parseType();
 };
 
 #endif // PARSER_H

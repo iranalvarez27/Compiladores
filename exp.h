@@ -1,21 +1,30 @@
 #ifndef EXP_H
 #define EXP_H
 
+
+#include "imp_value.hh"
+#include "imp_type.hh"
 #include <string>
-#include <list>
 #include <unordered_map>
+#include <list>
 #include "visitor.h"
+#include "type_visitor.h"
 
 using namespace std;
+
+class ImpInterpreter;
 
 // Enumeraciones para operadores relacionales y binarios
 enum RelOp { LT_OP, LE_OP, EQ_OP, GT_OP, GE_OP, NE_OP };
 enum BinaryOp { PLUS_OP, MINUS_OP, MUL_OP, DIV_OP };
+class ImpValueVisitor;
 
 // Representa cualquier expresión del lenguaje
 class CExp {
 public:
     virtual int accept(Visitor* visitor) = 0;
+    virtual ImpValue accept(ImpValueVisitor* v) = 0;
+    virtual ImpType accept(TypeVisitor* v) = 0;
     virtual ~CExp() = 0;
     static string binopToChar(BinaryOp op){
         switch (op) {
@@ -47,6 +56,8 @@ public:
     BinaryOp op;
     BinaryExp(CExp* left, CExp* right, BinaryOp op);
     int accept(Visitor* visitor);
+    ImpValue accept(ImpValueVisitor* v);
+    ImpType accept(TypeVisitor* v);
     ~BinaryExp();
 };
 
@@ -58,6 +69,8 @@ public:
     RelOp op;
     RelationalExp(CExp* left, CExp* right, RelOp op);
     int accept(Visitor* visitor);
+    ImpValue accept(ImpValueVisitor* v);
+    ImpType accept(TypeVisitor* v);
     ~RelationalExp();
 };
 
@@ -73,6 +86,8 @@ public:
     string name;
     IdentifierExp(const string& name);
     int accept(Visitor* visitor);
+    ImpValue accept(ImpValueVisitor* v);
+    ImpType accept(TypeVisitor* v);
     ~IdentifierExp();
 };
 
@@ -82,6 +97,8 @@ public:
     int value;
     NumberExp(int value);
     int accept(Visitor* visitor);
+    ImpValue accept(ImpValueVisitor* v);
+    ImpType accept(TypeVisitor* v);
     ~NumberExp();
 };
 
@@ -92,6 +109,8 @@ public:
     ArgList* args;
     FuncCallExp(string name, ArgList* args);
     int accept(Visitor* visitor);
+    ImpValue accept(ImpValueVisitor* v);
+    ImpType accept(TypeVisitor* v);
     ~FuncCallExp();
 };
 
@@ -102,6 +121,8 @@ public:
     string varName;
     VarDec(string type, string varName);
     int accept(Visitor* visitor);
+    void accept(ImpValueVisitor* v);
+    void accept(TypeVisitor* v);
     ~VarDec();
 };
 
@@ -112,6 +133,8 @@ public:
     VarDecList();
     void add(VarDec* vardec);
     int accept(Visitor* visitor);
+    void accept(ImpValueVisitor* v);
+    void accept(TypeVisitor* v);
     ~VarDecList();
 };
 
@@ -122,6 +145,8 @@ public:
     string name;
     Param(string type, string name);
     int accept(Visitor* visitor);
+    void accept(ImpValueVisitor* v);
+    void accept(TypeVisitor* v);
     ~Param();
 };
 
@@ -132,6 +157,8 @@ public:
     ParamList();
     void add(Param* param);
     int accept(Visitor* visitor);
+    void accept(ImpValueVisitor* v);
+    void accept(TypeVisitor* v);
     ~ParamList();
 };
 
@@ -146,6 +173,8 @@ public:
     ReturnStatement* returnStmt;
     FuncDecl(string type, string name, ParamList* params, VarDecList* varDecs, StatementList* stmts, ReturnStatement* returnStmt);
     int accept(Visitor* visitor);
+    void accept(ImpValueVisitor* v);
+    void accept(TypeVisitor* v);
     ~FuncDecl();
 };
 
@@ -156,6 +185,8 @@ public:
     FuncList();
     void add(FuncDecl* funcDecl);
     int accept(Visitor* visitor);
+    void accept(ImpValueVisitor* v);
+    void accept(TypeVisitor* v);
     ~FuncList();
 };
 
@@ -163,6 +194,8 @@ public:
 class Stmt {
 public:
     virtual int accept(Visitor* visitor) = 0;
+    virtual void accept(ImpValueVisitor* v) = 0;
+    virtual void accept(TypeVisitor* v) = 0;
     virtual ~Stmt() = 0;
 };
 
@@ -173,6 +206,8 @@ public:
     CExp* rhs;
     Assignment(string id, CExp* rhs);
     int accept(Visitor* visitor);
+    void accept(ImpValueVisitor* v);
+    void accept(TypeVisitor* v);
     ~Assignment();
 };
 
@@ -180,9 +215,12 @@ public:
 class PrintStmt : public Stmt {
 public:
     string format;
-    CExp* exp;
+    CExp* exp;    
     PrintStmt(string format, CExp* exp);
     int accept(Visitor* visitor);
+    void accept(ImpValueVisitor* v);
+    void accept(TypeVisitor* v);
+    
     ~PrintStmt();
 };
 
@@ -192,6 +230,8 @@ public:
     CExp* exp;
     ReturnStatement(CExp* exp);
     int accept(Visitor* visitor);
+    void accept(ImpValueVisitor* v);
+    void accept(TypeVisitor* v);
     ~ReturnStatement();
 };
 
@@ -203,6 +243,8 @@ public:
     StatementList* elseBody;
     IfStmt(CExp* condition, StatementList* thenBody, StatementList* elseBody);
     int accept(Visitor* visitor);
+    void accept(ImpValueVisitor* v);
+    void accept(TypeVisitor* v);
     ~IfStmt();
 };
 
@@ -212,6 +254,8 @@ public:
     string id;
     StepCondition(string id);
     int accept(Visitor* visitor);
+    void accept(ImpValueVisitor* v);
+    void accept(TypeVisitor* v);
     ~StepCondition();
 };
 
@@ -224,6 +268,8 @@ public:
     StatementList* body;
     ForStmt(Assignment* init, CExp* condition, StepCondition* step, StatementList* body);
     int accept(Visitor* visitor);
+    void accept(ImpValueVisitor* v);
+    void accept(TypeVisitor* v);
     ~ForStmt();
 };
 
@@ -234,6 +280,8 @@ public:
     StatementList();
     void add(Stmt* statement);
     int accept(Visitor* visitor);
+    void accept(ImpValueVisitor* v);
+    void accept(TypeVisitor* v);
     ~StatementList();
 };
 
@@ -243,6 +291,8 @@ public:
     FuncCallExp* funcCall;
     FuncCallStmt(FuncCallExp* funcCall);
     int accept(Visitor* visitor);
+    void accept(ImpValueVisitor* v);
+    void accept(TypeVisitor* v);
     ~FuncCallStmt();
 };
 
@@ -253,6 +303,8 @@ public:
     CExp* rhs;
     Operaciones(string id, CExp* rhs);
     int accept(Visitor* visitor);
+    void accept(ImpValueVisitor* v);
+    void accept(TypeVisitor* v);
     ~Operaciones();
 };
 
@@ -262,6 +314,8 @@ public:
     string type;
     Type(string type);
     int accept(Visitor* visitor);
+    void accept(ImpValueVisitor* v);
+    void accept(TypeVisitor* v);
     ~Type();
 };
 
@@ -272,11 +326,11 @@ public:
     ArgList();
     void add(CExp* arg);
     int accept(Visitor* visitor);
+    void accept(ImpValueVisitor* v);
+    void accept(TypeVisitor* v);
     ~ArgList();
 
 };
-
-
 
 // Programa completo
 class Program {
@@ -284,6 +338,8 @@ public:
     FuncList* functions;
     Program(FuncList* functions);
     int accept(Visitor* visitor);
+    void accept(ImpValueVisitor* v);
+    void accept(TypeVisitor* v);
     ~Program();
 };
 

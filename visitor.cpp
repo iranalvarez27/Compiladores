@@ -10,11 +10,6 @@ unordered_map<std::string, int> memoria;
 ///////////////////////////////////////////////////////////////////////////////////
 // Implementación de las clases accept para las expresiones y sentencias
 
-// ==== CExp ====
-int CExp::accept(Visitor* visitor) {
-    return visitor->visit(this);
-}
-
 // ==== BinaryExp ====
 int BinaryExp::accept(Visitor* visitor) {
     return visitor->visit(this);
@@ -78,6 +73,12 @@ int FuncList::accept(Visitor* visitor) {
 
 // ==== Assignment ====
 int Assignment::accept(Visitor* visitor) {
+    visitor->visit(this);
+    return 0;
+}
+
+
+int Operaciones::accept(Visitor* visitor) {
     visitor->visit(this);
     return 0;
 }
@@ -152,12 +153,6 @@ void PrintVisitor::imprimir(Program* program) {
         return;
     }
     program->accept(this); 
-}
-
-int PrintVisitor::visit(CExp* exp) {
-    printIndent();
-    cout << "CExp" << endl;
-    return 0;
 }
 
 int PrintVisitor::visit(BinaryExp* exp){
@@ -299,6 +294,13 @@ void PrintVisitor::visit(StatementList* stmtList) {
     }
 }
 
+void PrintVisitor::visit(Operaciones* op) {
+    printIndent();
+    cout << op->id << " = ";
+    op->rhs->accept(this);
+    cout << ";" << endl;
+}
+
 void PrintVisitor::visit(FuncCallStmt* funcCallStmt) {
     printIndent();
     cout << ";" << endl;
@@ -323,167 +325,3 @@ void PrintVisitor::printIndent() {
         cout << ' ';
     }
 }
-
-///////////////////////////////////////////////////////////////////////////////////
-// Implementación de EvalVisitor para evaluar expresiones
-
-void EVALVisitor::ejecutar(Program* program){
-    for (FuncDecl* func : program->functions->functions) {
-        func->accept(this);
-    }   
-}
-
-int EVALVisitor::visit(CExp* exp) {
-    return exp->accept(this);
-}
-
-int EVALVisitor::visit(BinaryExp* exp) {
-    int left = exp->left->accept(this);
-    int right = exp->right->accept(this);
-    switch (exp->op) {
-        case BinaryOp::PLUS_OP: return left + right;
-        case BinaryOp::MINUS_OP: return left - right;
-        case BinaryOp::MUL_OP: return left * right;
-        case BinaryOp::DIV_OP: return left / right;
-    }
-    return 0;
-}
-
-int EVALVisitor::visit(RelationalExp* exp) {
-    int left = exp->left->accept(this);
-    int right = exp->right->accept(this);
-    switch (exp->op) {
-        case RelOp::LT_OP: return left < right;
-        case RelOp::LE_OP: return left <= right;
-        case RelOp::GT_OP: return left > right;
-        case RelOp::GE_OP: return left >= right;
-        case RelOp::EQ_OP: return left == right;
-        case RelOp::NE_OP: return left != right;
-    }
-    return 0;
-}
-
-int EVALVisitor::visit(IdentifierExp* exp) {
-    if (memoria.find(exp->name) == memoria.end()) {
-        throw runtime_error("Variable no inicializada: " + exp->name);
-    }
-    return memoria[exp->name];
-}
-
-
-int EVALVisitor::visit(NumberExp* exp) {
-    return exp->value;
-}
-
-int EVALVisitor::visit(FuncCallExp* exp) {
-    cout << "FuncCallExp" << endl;
-    //Falta implementar
-    return 0;
-}
-
-void EVALVisitor::visit(IfStmt* ifStmt) {
-    if(ifStmt->condition->accept(this)){
-        for (Stmt* s : ifStmt->thenBody->statements) {
-            s->accept(this);
-        }
-    }
-    else{
-        for (Stmt* s : ifStmt->elseBody->statements) {
-            s->accept(this);
-        }
-    }
-}
-
-void EVALVisitor::visit(StepCondition* stepCondition) {
-    memoria[stepCondition->id]++;
-}
-
-void EVALVisitor::visit(ForStmt* forStmt) {
-    forStmt->init->accept(this);
-    while(forStmt->condition->accept(this)){
-        for (Stmt* s : forStmt->body->statements) {
-            s->accept(this);
-        }
-        //forStmt->step->accept(this);
-        //operation
-        cout << " " << CExp::binopToChar(BinaryOp::PLUS_OP) << " ";
-    }
-}
-
-void EVALVisitor::visit(ReturnStatement* returnStmt) {
-    returnStmt->exp->accept(this);
-}
-
-void EVALVisitor::visit(PrintStmt* printStmt) {
-    string format = printStmt->format;
-    size_t pos = format.find("%");
-    if (pos != string::npos) {
-        cout << format.substr(0, pos); 
-        cout << printStmt->exp->accept(this); 
-        cout << format.substr(pos + 2); 
-    } else {
-        cout << format;
-    }
-    cout << endl;
-}
-
-void EVALVisitor::visit(Assignment* assignment) {
-    memoria[assignment->id] = assignment->rhs->accept(this);
-}
-
-void EVALVisitor::visit(VarDec* varDec) {
-    memoria[varDec->varName] = 0;
-}
-
-void EVALVisitor::visit(VarDecList* varDecList) {
-    for (VarDec* varDec : varDecList->vardecs) {
-        varDec->accept(this);
-    }
-}
-
-void EVALVisitor::visit(Param* param) {
-    memoria[param->name] = 0;
-}
-
-void EVALVisitor::visit(ParamList* paramList) {
-    for (Param* param : paramList->params) {
-        param->accept(this);
-    }
-}
-
-void EVALVisitor::visit(FuncDecl* funcDecl) {
-    funcDecl->varDecs->accept(this);
-    funcDecl->stmts->accept(this);
-    funcDecl->returnStmt->accept(this);
-}
-
-void EVALVisitor::visit(FuncList* funcList) {
-    for (FuncDecl* func : funcList->functions) {
-        func->accept(this);
-    }
-}
-
-void EVALVisitor::visit(StatementList* stmtList) {
-    for (Stmt* stmt : stmtList->statements) {
-        stmt->accept(this);
-    }
-}
-
-void EVALVisitor::visit(FuncCallStmt* funcCallStmt) {
-    cout << "FuncCallStmt" << endl;
-}
-
-void EVALVisitor::visit(Type* type) {
-    cout << type->type;
-}
-
-void EVALVisitor::visit(ArgList* argList) {
-    for (CExp* arg : argList->args) {
-        arg->accept(this);
-    }
-}
-
-void EVALVisitor::visit(Program* program) {
-    program->functions->accept(this);
-}
-

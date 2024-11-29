@@ -28,11 +28,12 @@ class FuncCallExp;
 class Type;
 class ArgList;
 class StepCondition;
+class Operaciones;
 class Program;
+
 
 class Visitor {
 public:
-    virtual int visit(CExp* exp) = 0;
     virtual int visit(BinaryExp* exp) = 0;
     virtual int visit(RelationalExp* exp) = 0;
     virtual int visit(IdentifierExp* exp) = 0;
@@ -47,6 +48,7 @@ public:
     virtual void visit(FuncDecl* funcDecl) = 0;
     virtual void visit(FuncList* funcList) = 0;
     virtual void visit(ArgList* argList) = 0;
+    virtual void visit(Operaciones* op) = 0;
 
     virtual void visit(Assignment* assignment) = 0;
     virtual void visit(PrintStmt* printStmt) = 0;
@@ -64,7 +66,6 @@ public:
 class PrintVisitor : public Visitor {
 public:
     void imprimir(Program* program);
-    int visit(CExp* exp) override;
     int visit(BinaryExp* exp) override;
     int visit(RelationalExp* exp) override;
     int visit(IdentifierExp* exp) override;
@@ -86,6 +87,7 @@ public:
     void visit(ForStmt* forStmt) override;
     void visit(StatementList* stmtList) override;
     void visit(StepCondition* stepCondition) override;
+    void visit(Operaciones* op) override;
 
     void visit(Type* type) override;
     int visit(FuncCallExp* exp) override;
@@ -97,40 +99,6 @@ private:
     void increaseIndent() { indentLevel++; }
     void decreaseIndent() { indentLevel--; }
     void printIndent();
-};
-
-// Implementación de EVALVisitor para evaluar expresiones y ejecutar sentencias
-class EVALVisitor : public Visitor {
-public:
-    void ejecutar(Program* program); //
-    int visit(CExp* exp) override; //
-    int visit(BinaryExp* exp) override;
-    int visit(RelationalExp* exp) override;
-    int visit(IdentifierExp* exp) override;
-    int visit(NumberExp* exp) override;
-    int visit(FuncCallExp* exp) override;
-
-    void visit(VarDec* varDec) override; //
-    void visit(VarDecList* varDecList) override; //
-    void visit(Param* param) override; //
-    void visit(ParamList* paramList) override; //
-    void visit(FuncDecl* funcDecl) override; //
-    void visit(FuncList* funcList) override; //
-
-    void visit(Assignment* assignment) override; //
-    void visit(PrintStmt* printStmt) override; //
-    void visit(ReturnStatement* returnStmt) override; //
-    void visit(IfStmt* ifStmt) override; //
-    void visit(ForStmt* forStmt) override; //
-    void visit(StatementList* stmtList) override; //
-    void visit(StepCondition* stepCondition) override; //
-
-    void visit(Type* type) override;
-    void visit(FuncCallStmt* funcCallStmt) override;
-    void visit(ArgList* argList) override;
-
-    void visit(Program* program) override;
-
 };
 
 #endif // VISITOR_H

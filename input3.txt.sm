@@ -1,0 +1,32 @@
+start: skip
+enter 1
+alloc 1
+mark
+pusha Lmain
+call
+halt
+Lmain: skip
+push  1
+storer 0
+push  0
+store 959854646
+L0: skip
+loadr 959854646
+push  10
+ne
+jmpz L1
+loadr 0
+load 1127879936
+sub
+storer 0
+push 1
+load -1443560937
+add
+store -1443560937
+goto L0
+L1: skip
+L2: skip
+loadr 0
+printf
+push  0
+ret

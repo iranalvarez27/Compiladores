@@ -13,9 +13,46 @@ bool is_white_space(char c) {
     return c == ' ' || c == '\n' || c == '\r' || c == '\t';
 }
 
+void Scanner::ignore() {
+    while (current < input.length()) {
+        // Ignorar espacios en blanco
+        if (is_white_space(input[current])) {
+            current++;
+            continue;
+        }
+
+        // Ignorar comentarios con "//"
+        if (input[current] == '/' && current + 1 < input.length() && input[current + 1] == '/') {
+            current += 2;
+            while (current < input.length() && input[current] != '\n') {
+                current++;
+            }
+            if (current < input.length() && input[current] == '\n') {
+                current++;
+            }
+            continue;
+        }
+
+        // Ignorar comentarios con "#"
+        if (input[current] == '#') {
+            while (current < input.length() && input[current] != '\n') {
+                current++; 
+            }
+            if (current < input.length() && input[current] == '\n') {
+                current++;
+            }
+            continue;
+        }
+
+        break;
+    }
+}
+
+
 // Generación del siguiente token
 Token* Scanner::nextToken() {
     Token* token;
+    ignore();
 
     // Ignorar espacios en blanco
     while (current < input.length() && is_white_space(input[current])) {
@@ -30,23 +67,19 @@ Token* Scanner::nextToken() {
     char c = input[current];
     first = current;
 
-    //cout << "Procesando carácter: " << c << " en posición: " << current << endl;
-
-    // Procesar números
+    
     if (isdigit(c)) {
         current++;
         while (current < input.length() && isdigit(input[current]))
             current++;
         token = new Token(Token::NUM, input, first, current - first);
     }
-    // Procesar identificadores y palabras clave
     else if (isalpha(c)) {
         current++;
         while (current < input.length() && isalnum(input[current]))
             current++;
         string word = input.substr(first, current - first);
 
-        // Comparar palabras clave
         if (word == "printf") token = new Token(Token::PRINTF, word, 0, word.length());
         else if (word == "if") token = new Token(Token::IF, word, 0, word.length());
         else if (word == "else") token = new Token(Token::ELSE, word, 0, word.length());
@@ -60,7 +93,6 @@ Token* Scanner::nextToken() {
         else if (word == "void") token = new Token(Token::VOID, word, 0, word.length());
         else token = new Token(Token::ID, word, 0, word.length());
     }
-    // Procesar cadenas de texto
     else if (c == '"') { 
         current++;
         while (current < input.length() && input[current] != '"')
@@ -72,7 +104,6 @@ Token* Scanner::nextToken() {
             current++;
         }
     }
-    // Procesar operadores y delimitadores
     else if (strchr("+-*/()=;,<>!{}%", c)) {
         switch (c) {
             case '*': token = new Token(Token::MUL, c); break;
@@ -138,7 +169,6 @@ Token* Scanner::nextToken() {
         }
         current++;
     }
-    // Caracter inválido
     else {
         token = new Token(Token::ERR, c); // Error
         current++;
@@ -146,23 +176,24 @@ Token* Scanner::nextToken() {
     return token;
 }
 
-// Restablecer el escáner
 void Scanner::reset() {
     first = 0;
     current = 0;
 }
 
-// Destructor
 Scanner::~Scanner() {}
 
-// Función para probar el escáner
 void test_scanner(Scanner* scanner) {
     Token* current;
-    cout << "Iniciando Scanner:" << endl << endl;
+
+    cout << "-------------------" << endl;
+    cout << "Iniciando Scanner:" << endl;
     do {
+        scanner->ignore();
         current = scanner->nextToken();
         cout << *current << endl;
     } while (current->type != Token::END);
     cout << "Fin del escaneo." << endl;
+    cout << "----------------" << endl;
 
 }

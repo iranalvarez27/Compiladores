@@ -205,3 +205,10 @@ Program::~Program() {
     delete functions;
 }
 
+// ==== Operaciones ====
+Operaciones::Operaciones(string id, CExp* rhs) 
+    : id(id), rhs(rhs) {}
+
+Operaciones::~Operaciones() {
+    delete rhs;
+}

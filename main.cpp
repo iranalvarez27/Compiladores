@@ -4,6 +4,10 @@
 #include "scanner.h"
 #include "parser.h"
 #include "visitor.h"
+#include "imp_interpreter.hh"
+#include "imp_type.hh"
+#include "imp_type_checker.hh"
+#include "imp_codegen.hh"
 
 using namespace std;
 
@@ -40,14 +44,21 @@ int main(int argc, const char* argv[]) {
     try {
         Program* program = parser.parseProgram();  // Parseo del programa
         cout << "Parsing exitoso" << endl << endl;
+        ImpInterpreter interpreter;
+        ImpTypeChecker type_checker;
+        ImpCodeGen codegen(&type_checker);
 
-        // Imprimir el árbol AST si es necesario
-        PrintVisitor printVisitor;
-        cout << "IMPRIMIR:" << endl;
-        printVisitor.imprimir(program);
+        cout << "TypeChecker:" << endl;
+        type_checker.typecheck(program);
+        
+        cout<<endl<<"generar codigo:"<<endl;
+        string filename = argv[1];
+        codegen.codegen(program, filename + ".sm");
+        cout << "End of program execution" << endl;
         
         delete program;
-    } catch (const exception& e) {
+    }
+    catch (const exception& e) {
         cout << "Error durante el parsing: " << e.what() << endl;
         return 1;
     }
