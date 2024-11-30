@@ -19,6 +19,7 @@ public:
   virtual void visit(IfStmt* e) = 0;
   virtual void visit(ReturnStatement* e) = 0;
   virtual void visit(ForStmt* e) = 0;
+  virtual void visit(WhileStmt* e) = 0;
   virtual void visit(FuncCallStmt* e) = 0;
   virtual void visit(StepCondition* e) = 0;
   virtual void visit(Operaciones* e) = 0;

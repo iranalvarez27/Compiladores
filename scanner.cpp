@@ -49,6 +49,7 @@ void Scanner::ignore() {
 }
 
 
+
 // Generación del siguiente token
 Token* Scanner::nextToken() {
     Token* token;
@@ -91,6 +92,7 @@ Token* Scanner::nextToken() {
         else if (word == "char") token = new Token(Token::CHAR, word, 0, word.length());
         else if (word == "return") token = new Token(Token::RETURN, word, 0, word.length());
         else if (word == "void") token = new Token(Token::VOID, word, 0, word.length());
+        else if (word == "while") token = new Token(Token::WHILE, word, 0, word.length());
         else token = new Token(Token::ID, word, 0, word.length());
     }
     else if (c == '"') { 
@@ -197,3 +199,4 @@ void test_scanner(Scanner* scanner) {
     cout << "----------------" << endl;
 
 }
+

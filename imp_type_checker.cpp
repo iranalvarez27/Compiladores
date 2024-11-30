@@ -275,6 +275,16 @@ void ImpTypeChecker::visit(ForStmt* s) {
     return;
 }
 
+void ImpTypeChecker::visit(WhileStmt* s) {
+    if (!s->condition->accept(this).match(booltype)) {
+        cout << "Error: La condición del 'while' debe ser de tipo bool." << endl;
+        exit(0);
+    }
+    sp_decr(1);
+    s->body->accept(this);
+    return;
+}
+
 void ImpTypeChecker::visit(Type* t) {
   ImpType type;
   type.set_basic_type(t->type);

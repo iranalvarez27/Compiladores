@@ -40,6 +40,7 @@ std::ostream& operator << ( std::ostream& outs, const Token & tok )
         case Token::FOR: outs << "TOKEN(FOR)"; break;
         case Token::PRINTF: outs << "TOKEN(PRINTF)"; break;
         case Token::PTJ: outs << " TOKEN(PTJ)"; break;
+        case Token::WHILE: outs << "TOKEN(WHILE)"; break;
 
         case Token::PLUS: outs << "TOKEN(PLUS)"; break;
         case Token::MINUS: outs << "TOKEN(MINUS)"; break;

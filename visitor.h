@@ -22,6 +22,7 @@ class PrintStmt;
 class ReturnStatement;
 class IfStmt;
 class ForStmt;
+class WhileStmt;
 class StatementList;
 class FuncCallStmt;
 class FuncCallExp;
@@ -55,6 +56,7 @@ public:
     virtual void visit(ReturnStatement* returnStmt) = 0;
     virtual void visit(IfStmt* ifStmt) = 0;
     virtual void visit(ForStmt* forStmt) = 0;
+    virtual void visit(WhileStmt* whileStmt) = 0;
     virtual void visit(StatementList* stmtList) = 0;
     virtual void visit(FuncCallStmt* funcCallStmt) = 0;
     virtual void visit(StepCondition* stepCondition) = 0;
@@ -85,6 +87,7 @@ public:
     void visit(FuncCallStmt* funcCallStmt) override;
     void visit(IfStmt* ifStmt) override;
     void visit(ForStmt* forStmt) override;
+    void visit(WhileStmt* whileStmt) override;
     void visit(StatementList* stmtList) override;
     void visit(StepCondition* stepCondition) override;
     void visit(Operaciones* op) override;

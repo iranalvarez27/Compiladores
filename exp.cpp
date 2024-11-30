@@ -184,6 +184,14 @@ ForStmt::~ForStmt() {
     delete body;
 }
 
+// ==== WhileStmt ====
+WhileStmt::WhileStmt(CExp* condition, StatementList* body) 
+    : condition(condition), body(body) {}
+WhileStmt::~WhileStmt() {
+    delete condition;
+    delete body;
+}
+
 // ==== StatementList ====
 StatementList::StatementList() {}
 

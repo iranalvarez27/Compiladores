@@ -86,6 +86,10 @@ void ForStmt::accept(TypeVisitor* v) {
     return v->visit(this);
 }
 
+void WhileStmt::accept(TypeVisitor* v) {
+    return v->visit(this);
+}
+
 void FuncCallStmt::accept(TypeVisitor* v) {
     return v->visit(this);
 }
@@ -138,6 +142,9 @@ void ForStmt::accept(ImpValueVisitor* v) {
     return v->visit(this);
 }
 
+void WhileStmt::accept(ImpValueVisitor* v) {
+    return v->visit(this);
+}
 
 void StatementList::accept(ImpValueVisitor* v) {
     return v->visit(this);
@@ -391,6 +398,23 @@ void ImpInterpreter::visit(ForStmt* s) {
 }
 
 
+void ImpInterpreter::visit(WhileStmt* s) {
+    while (true) {
+        ImpValue conditionValue = s->condition->accept(this);
+        if (conditionValue.type != TBOOL) {
+            cout << "Error de tipos: la condición del ciclo debe ser booleana." << endl;
+            exit(0);
+        }
+
+        if (!conditionValue.bool_value) {
+            break;
+        }
+
+        s->body->accept(this);
+    }
+
+    return;
+}
 ImpValue ImpInterpreter::visit(BinaryExp* e) {
     ImpValue result;
     ImpValue v1 = e->left->accept(this);

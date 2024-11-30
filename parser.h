@@ -13,8 +13,6 @@ private:
     bool check(Token::Type ttype);
     bool advance();
     bool isAtEnd();
-    void ignore();
-    void retreat();
     CExp* parseExp();
     CExp* parseTerm();
     CExp* parseFactor();
@@ -35,11 +33,13 @@ public:
     ReturnStatement* parseReturnStmt();
     IfStmt* parseIfStmt();
     ForStmt* parseForStmt();
+    WhileStmt* parseWhileStmt();
     FuncCallExp* parseFuncCallExp();
     FuncCallStmt* parseFuncCallStmt();
     ArgList* parseArgList();
     RelationalExp* parseRelationalExp();
     StepCondition* parseStepCondition();
+
     CExp* parseCExp();
     
 };

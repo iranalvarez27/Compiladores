@@ -329,6 +329,32 @@ StatementList* Parser::parseStatementList() {
 }
 
 
+WhileStmt* Parser::parseWhileStmt() {
+    if (!match(Token::WHILE)) {
+        cout << "Error: Se esperaba un 'while' en la línea " << previous->text << endl;
+        exit(1);
+    }
+    if (!match(Token::PI)) {
+        cout << "Error: Se esperaba un '(' en la línea " << previous->text << endl;
+        exit(1);
+    }
+    CExp* condition = parseRelationalExp();
+    if (!match(Token::PD)) {
+        cout << "Error: Se esperaba un ')' en la línea " << previous->text << endl;
+        exit(1);
+    }
+    if (!match(Token::LLI)) {
+        cout << "Error: Se esperaba un '{' en la línea " << previous->text << endl;
+        exit(1);
+    }
+    StatementList* body = parseStatementList();
+    if (!match(Token::LLD)) {
+        cout << "Error: Se esperaba un '}' en la línea " << previous->text << endl;
+        exit(1);
+    }
+    return new WhileStmt(condition, body);
+}
+
 Stmt* Parser::parseStatement() {
     if (check(Token::IF)) {
         return parseIfStmt();
@@ -340,6 +366,8 @@ Stmt* Parser::parseStatement() {
         return parseReturnStmt();
     } else if (check(Token::FOR)) {
         return parseForStmt();
+    } else if (check(Token::WHILE)) {
+        return parseWhileStmt();
     } else {
         advance();
     }    return nullptr;
@@ -513,3 +541,4 @@ Parser::Parser(Scanner* sc):scanner(sc) {
         exit(1);
     }
 }
+

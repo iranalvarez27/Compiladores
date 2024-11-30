@@ -77,7 +77,6 @@ int Assignment::accept(Visitor* visitor) {
     return 0;
 }
 
-
 int Operaciones::accept(Visitor* visitor) {
     visitor->visit(this);
     return 0;
@@ -103,6 +102,12 @@ int IfStmt::accept(Visitor* visitor) {
 
 // ==== ForStmt ====
 int ForStmt::accept(Visitor* visitor) {
+    visitor->visit(this);
+    return 0;
+}
+
+// ==== WhileStmt ====
+int WhileStmt::accept(Visitor* visitor) {
     visitor->visit(this);
     return 0;
 }
@@ -284,6 +289,16 @@ void PrintVisitor::visit(ForStmt* forStmt) {
     //forStmt->step->accept(this);
     cout << ") {" << endl;
     forStmt->body->accept(this);
+    printIndent();
+    cout << "}" << endl;
+}
+
+void PrintVisitor::visit(WhileStmt* whileStmt) {
+    printIndent();
+    cout << "while (";
+    whileStmt->condition->accept(this);
+    cout << ") {" << endl;
+    whileStmt->body->accept(this);
     printIndent();
     cout << "}" << endl;
 }

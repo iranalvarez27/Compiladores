@@ -213,6 +213,18 @@ void ImpCodeGen::visit(ForStmt* s) {
   return ;
 }
 
+void ImpCodeGen::visit(WhileStmt* s) {
+  string l1 = next_label();
+  string l2 = next_label();
+  codegen(l1,"skip");
+  s->condition->accept(this);
+  codegen(nolabel,"jmpz",l2);
+  s->body->accept(this);
+  codegen(nolabel,"goto",l1);
+  codegen(l2,"skip");
+  return ;
+}
+
 void ImpCodeGen::visit(StepCondition* s) {
   VarEntry ventry = direcciones.lookup(s->id);
   codegen(nolabel,"push",1);

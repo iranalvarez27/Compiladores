@@ -52,6 +52,7 @@ public:
   void visit(IfStmt*);
   void visit(ReturnStatement*);
   void visit(ForStmt*);
+  void visit(WhileStmt*);
   void visit(FuncCallStmt*);
   void visit(StepCondition*);
   void visit(Operaciones*);

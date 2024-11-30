@@ -259,6 +259,18 @@ public:
     ~StepCondition();
 };
 
+// Sentencia while
+class WhileStmt : public Stmt {
+public:
+    CExp* condition;
+    StatementList* body;
+    WhileStmt(CExp* condition, StatementList* body);
+    int accept(Visitor* visitor);
+    void accept(ImpValueVisitor* v);
+    void accept(TypeVisitor* v);
+    ~WhileStmt();
+};
+
 // Sentencia for
 class ForStmt : public Stmt {
 public:
